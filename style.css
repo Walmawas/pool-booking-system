@@ -470,18 +470,19 @@ h2 {
 
 .customer-calendar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 12px;
 }
 
 .customer-day-card {
-  min-height: 170px;
-  padding: 14px;
+  min-height: 188px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
   display: grid;
   gap: 12px;
+  align-content: start;
 }
 
 .customer-day-card.tone-0 {
@@ -505,17 +506,23 @@ h2 {
 .customer-date {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: start;
   gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
 }
 
 .customer-date strong {
-  font-size: 1.35rem;
+  display: block;
+  font-size: 1.55rem;
+  line-height: 1.1;
+  color: var(--text);
 }
 
 .customer-date span {
   color: var(--muted);
   font-weight: 800;
+  font-size: 0.78rem;
 }
 
 .customer-slots {
@@ -525,8 +532,8 @@ h2 {
 
 .customer-slot {
   cursor: pointer;
-  min-height: 42px;
-  padding: 8px 10px;
+  min-height: 38px;
+  padding: 7px 9px;
   border-radius: var(--radius);
   background: var(--surface-soft);
   border: 1px solid var(--line);
@@ -535,13 +542,14 @@ h2 {
   align-items: center;
   gap: 8px;
   font-weight: 800;
+  font-size: 0.82rem;
 }
 
 .day-price-line,
 .admin-day-price {
   color: var(--primary-dark);
   font-weight: 800;
-  font-size: 0.92rem;
+  font-size: 0.78rem;
 }
 
 .customer-slot.is-booked {
@@ -902,8 +910,8 @@ h2 {
 }
 
 .calendar-day {
-  min-height: 146px;
-  padding: 10px;
+  min-height: 154px;
+  padding: 11px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -933,13 +941,22 @@ h2 {
 .day-number {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: start;
   font-weight: 800;
+  gap: 8px;
+}
+
+.day-number span {
+  font-size: 1.08rem;
+  line-height: 1.15;
 }
 
 .day-number small {
   color: var(--muted);
   font-weight: 700;
+  font-size: 0.72rem;
+  direction: ltr;
+  white-space: nowrap;
 }
 
 .periods {
@@ -949,7 +966,7 @@ h2 {
 
 .period-slot {
   width: 100%;
-  min-height: 43px;
+  min-height: 39px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--surface-soft);
@@ -958,8 +975,9 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 7px 9px;
   font-weight: 800;
+  font-size: 0.82rem;
 }
 
 .period-slot span {
@@ -969,6 +987,7 @@ h2 {
 .period-slot small {
   color: var(--muted);
   font-weight: 700;
+  font-size: 0.72rem;
   white-space: nowrap;
 }
 

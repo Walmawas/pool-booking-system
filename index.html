@@ -262,14 +262,15 @@
               </div>
 
               <input id="editingBookingId" type="hidden" />
-              <div class="selected-summary"><span>الأيام المختارة</span><strong id="selectedDaysCount">0</strong></div>
+              <div class="selected-summary">
+                <span>الفترات المختارة</span>
+                <strong id="selectedDaysCount">0</strong>
+              </div>
 
               <label>
-                نوع الحجز
+                طريقة التسعير
                 <select id="periodSelect" required>
-                  <option value="morning">صباحي (9am - 7pm)</option>
-                  <option value="evening">مسائي (9pm - 7am)</option>
-                  <option value="full">كامل</option>
+                  <option value="auto">تلقائي حسب الفترات المحددة</option>
                 </select>
               </label>
 
@@ -305,14 +306,14 @@
                   <label>صباحي <input id="morningPriceInput" type="number" min="0" step="0.01" required /></label>
                   <label>مسائي <input id="eveningPriceInput" type="number" min="0" step="0.01" required /></label>
                 </div>
-                <label>كامل عادي <input id="fullPriceInput" type="number" readonly /></label>
+                <label>كامل عادي <input id="fullPriceInput" type="number" min="0" step="0.01" required /></label>
 
                 <h3 class="settings-subtitle">الأيام المميزة</h3>
                 <div class="two-columns">
                   <label>صباحي مميز <input id="featuredMorningPriceInput" type="number" min="0" step="0.01" required /></label>
                   <label>مسائي مميز <input id="featuredEveningPriceInput" type="number" min="0" step="0.01" required /></label>
                 </div>
-                <label>كامل مميز <input id="featuredFullPriceInput" type="number" readonly /></label>
+                <label>كامل مميز <input id="featuredFullPriceInput" type="number" min="0" step="0.01" required /></label>
 
                 <label>
                   العملة

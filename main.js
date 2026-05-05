@@ -115,13 +115,32 @@ const state = {
 const periodLabels = {
   morning: "صباحي",
   evening: "مسائي",
-  full: "كامل"
+  full: "كامل",
+  mixed: "فترات متعددة",
+  auto: "تلقائي"
 };
 
 const slotLabels = {
   morning: "صباحي",
   evening: "مسائي"
 };
+
+const arabicMonthNames = [
+  "كانون الثاني",
+  "شباط",
+  "آذار",
+  "نيسان",
+  "أيار",
+  "حزيران",
+  "تموز",
+  "آب",
+  "أيلول",
+  "تشرين الأول",
+  "تشرين الثاني",
+  "كانون الأول"
+];
+
+const arabicWeekdayNames = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 initializePublicControls();
 bindEvents();
@@ -235,7 +254,7 @@ function bindEvents() {
     els.eveningPriceInput,
     els.featuredMorningPriceInput,
     els.featuredEveningPriceInput
-  ].forEach((input) => input.addEventListener("input", renderCalculatedSettingsFields));
+  ].forEach((input) => input.addEventListener("input", updateSelectedSummary));
 
   els.addFeaturedDateBtn.addEventListener("click", () => {
     if (!els.featuredDateInput.value) {
@@ -453,21 +472,29 @@ function subscribeBookings() {
 function normalizeSettings(raw = {}) {
   const standardMorning = Number(raw.standardPrices?.morning ?? raw.morningPrice ?? defaultSettings.morningPrice ?? 0);
   const standardEvening = Number(raw.standardPrices?.evening ?? raw.eveningPrice ?? defaultSettings.eveningPrice ?? 0);
+  const standardFull = Number(
+    raw.standardPrices?.full ?? defaultSettings.standardPrices?.full ?? 0
+  );
   const featuredMorning = Number(
     raw.featuredPrices?.morning ?? raw.featuredMorningPrice ?? defaultSettings.featuredPrices?.morning ?? standardMorning
   );
   const featuredEvening = Number(
     raw.featuredPrices?.evening ?? raw.featuredEveningPrice ?? defaultSettings.featuredPrices?.evening ?? standardEvening
   );
+  const featuredFull = Number(
+    raw.featuredPrices?.full ?? defaultSettings.featuredPrices?.full ?? 0
+  );
 
   return {
     standardPrices: {
       morning: standardMorning,
-      evening: standardEvening
+      evening: standardEvening,
+      full: standardFull
     },
     featuredPrices: {
       morning: featuredMorning,
-      evening: featuredEvening
+      evening: featuredEvening,
+      full: featuredFull
     },
     featuredWeekdays: (raw.featuredWeekdays ?? defaultSettings.featuredWeekdays ?? [4, 5, 6]).map(Number),
     featuredDates: [...new Set(raw.featuredDates ?? defaultSettings.featuredDates ?? [])].sort(),
@@ -479,23 +506,16 @@ function renderSettings() {
   if (!els.morningPriceInput) return;
   els.morningPriceInput.value = state.settings.standardPrices.morning;
   els.eveningPriceInput.value = state.settings.standardPrices.evening;
+  els.fullPriceInput.value = state.settings.standardPrices.full;
   els.featuredMorningPriceInput.value = state.settings.featuredPrices.morning;
   els.featuredEveningPriceInput.value = state.settings.featuredPrices.evening;
+  els.featuredFullPriceInput.value = state.settings.featuredPrices.full;
   els.currencySelect.value = "USD";
   document.querySelectorAll('input[name="featuredWeekday"]').forEach((checkbox) => {
     checkbox.checked = state.settings.featuredWeekdays.includes(Number(checkbox.value));
   });
   state.featuredDatesDraft = new Set(state.settings.featuredDates);
-  renderCalculatedSettingsFields();
   renderFeaturedDatesList();
-}
-
-function renderCalculatedSettingsFields() {
-  els.fullPriceInput.value =
-    Number(els.morningPriceInput.value || 0) + Number(els.eveningPriceInput.value || 0);
-  els.featuredFullPriceInput.value =
-    Number(els.featuredMorningPriceInput.value || 0) +
-    Number(els.featuredEveningPriceInput.value || 0);
 }
 
 function renderFeaturedDatesList() {
@@ -517,10 +537,16 @@ function renderFeaturedDatesList() {
 function collectSettingsForm() {
   const standardMorning = Number(els.morningPriceInput.value);
   const standardEvening = Number(els.eveningPriceInput.value);
+  const standardFull = Number(els.fullPriceInput.value);
   const featuredMorning = Number(els.featuredMorningPriceInput.value);
   const featuredEvening = Number(els.featuredEveningPriceInput.value);
+  const featuredFull = Number(els.featuredFullPriceInput.value);
 
-  if ([standardMorning, standardEvening, featuredMorning, featuredEvening].some((value) => value < 0)) {
+  if (
+    [standardMorning, standardEvening, standardFull, featuredMorning, featuredEvening, featuredFull].some(
+      (value) => value < 0
+    )
+  ) {
     toast("الأسعار يجب أن تكون أرقامًا موجبة.", "error");
     return null;
   }
@@ -528,11 +554,13 @@ function collectSettingsForm() {
   return {
     standardPrices: {
       morning: standardMorning,
-      evening: standardEvening
+      evening: standardEvening,
+      full: standardFull
     },
     featuredPrices: {
       morning: featuredMorning,
-      evening: featuredEvening
+      evening: featuredEvening,
+      full: featuredFull
     },
     featuredWeekdays: [...document.querySelectorAll('input[name="featuredWeekday"]:checked')].map((item) =>
       Number(item.value)
@@ -547,7 +575,7 @@ function renderStats() {
     (acc, booking) => {
       acc.revenue += Number(booking.price || 0);
       acc.deposits += Number(booking.deposit || 0);
-      acc.slots += getSlotKeys(booking.dates || [], booking.period).length;
+      acc.slots += getBookingSlotKeys(booking).length;
       return acc;
     },
     { revenue: 0, deposits: 0, slots: 0 }
@@ -617,6 +645,7 @@ function renderPublicCalendar() {
   els.publicCalendarGrid.innerHTML = days
     .map((date, index) => {
       const dateKey = toDateKey(date);
+      const dateParts = getDateDisplayParts(dateKey);
       const morningBooked = state.publicSlots.has(makeSlotKey(dateKey, "morning"));
       const eveningBooked = state.publicSlots.has(makeSlotKey(dateKey, "evening"));
       const featured = isFeaturedDate(dateKey);
@@ -629,10 +658,10 @@ function renderPublicCalendar() {
       }">
           <div class="customer-date">
             <div>
-              <strong>${date.toLocaleDateString("ar", { day: "numeric" })}</strong>
-              <span>${date.toLocaleDateString("ar", { weekday: "long" })}</span>
+              <strong>${dateParts.weekday}</strong>
+              <span>${dateParts.numeric}</span>
             </div>
-            <span>${date.toLocaleDateString("ar", { month: "long", year: "numeric" })}</span>
+            <span>${dateParts.monthYear}</span>
           </div>
           <div class="day-price-line">${featured ? "يوم مميز" : "يوم عادي"} - كامل ${formatMoney(prices.full)}</div>
           <div class="customer-slots">
@@ -687,7 +716,7 @@ function renderPriceCard(title, prices) {
       <span class="eyebrow">${title}</span>
       <div><strong>صباحي</strong><b>${formatMoney(prices.morning)}</b></div>
       <div><strong>مسائي</strong><b>${formatMoney(prices.evening)}</b></div>
-      <div><strong>كامل</strong><b>${formatMoney(prices.morning + prices.evening)}</b></div>
+      <div><strong>كامل</strong><b>${formatMoney(prices.full)}</b></div>
     </article>
   `;
 }
@@ -701,7 +730,7 @@ function renderWeekdayPriceList() {
       return `
         <span class="weekday-price-row">
           <strong>${name} ${featured ? "مميز" : "عادي"}</strong>
-          <b>${formatMoney(prices.morning + prices.evening)}</b>
+          <b>${formatMoney(prices.full)}</b>
         </span>
       `;
     })
@@ -731,12 +760,7 @@ function getPublicCalendarDays() {
 
   if (mode === "day") {
     return {
-      title: anchor.toLocaleDateString("ar", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric"
-      }),
+      title: formatLongDate(toDateKey(anchor)),
       days: [new Date(anchor)]
     };
   }
@@ -776,16 +800,13 @@ function getPublicCalendarDays() {
     return new Date(first.getFullYear(), first.getMonth(), index + 1);
   });
   return {
-    title: first.toLocaleDateString("ar", { month: "long", year: "numeric" }),
+    title: formatMonthYear(first),
     days
   };
 }
 
 function renderCalendar() {
-  els.monthTitle.textContent = state.currentMonth.toLocaleDateString("ar", {
-    month: "long",
-    year: "numeric"
-  });
+  els.monthTitle.textContent = formatMonthYear(state.currentMonth);
 
   const bookedSlots = buildBookedSlotMap();
   const days = getCalendarDays(state.currentMonth);
@@ -807,7 +828,7 @@ function renderCalendar() {
         featured ? "featured-day" : ""
       } ${hasBookedSlot ? "booked-day" : ""}">
           <div class="day-number">
-            <span>${day.getDate()}</span>
+            <span>${formatWeekday(dateKey)}</span>
             <small>${formatShortDate(dateKey)}</small>
           </div>
           <div class="admin-day-price">${featured ? "مميز" : "عادي"} - ${formatMoney(getDayPrices(dateKey).full)}</div>
@@ -846,36 +867,24 @@ function renderSlotButton(dateKey, period, bookedSlots) {
 }
 
 function toggleSlot(dateKey, slotPeriod) {
-  const bookingPeriod = els.periodSelect.value;
   const bookedSlots = buildBookedSlotMap();
-  const periods = bookingPeriod === "full" ? ["morning", "evening"] : [slotPeriod];
-
-  if (bookingPeriod !== "full") {
-    if (els.periodSelect.value !== slotPeriod) state.selectedSlots.clear();
-    els.periodSelect.value = slotPeriod;
-  }
-
-  const slotKeys = periods.map((period) => makeSlotKey(dateKey, period));
-  if (slotKeys.some((slotKey) => bookedSlots.has(slotKey))) {
+  const slotKey = makeSlotKey(dateKey, slotPeriod);
+  if (bookedSlots.has(slotKey)) {
     toast("هذه الفترة محجوزة بالفعل.", "error");
     return;
   }
 
-  const shouldRemove = slotKeys.every((slotKey) => state.selectedSlots.has(slotKey));
-  slotKeys.forEach((slotKey) => {
-    if (shouldRemove) state.selectedSlots.delete(slotKey);
-    else state.selectedSlots.add(slotKey);
-  });
+  if (state.selectedSlots.has(slotKey)) state.selectedSlots.delete(slotKey);
+  else state.selectedSlots.add(slotKey);
 
   updateSelectedSummary();
   renderCalendar();
 }
 
 function updateSelectedSummary() {
-  const period = els.periodSelect.value;
-  const dates = getSelectedDates(period);
-  els.selectedDaysCount.textContent = dates.length;
-  els.priceInput.value = calculateBookingPrice(dates, period);
+  const summary = summarizeSelectedSlots([...state.selectedSlots]);
+  els.selectedDaysCount.textContent = `${summary.slotCount} فترة / ${summary.fullBlocks} كامل`;
+  els.priceInput.value = summary.price;
 }
 
 function renderBookingsTable() {
@@ -896,7 +905,7 @@ function renderBookingsTable() {
           <td>${escapeHtml(booking.clientName || "-")}</td>
           <td>${escapeHtml(booking.phone || "-")}</td>
           <td>${dates.map(formatShortDate).join("، ")}</td>
-          <td>${periodLabels[booking.period] || booking.period}</td>
+          <td>${formatBookingPeriod(booking)}</td>
           <td>${formatMoney(booking.price || 0)}</td>
           <td>${formatMoney(booking.deposit || 0)}</td>
           <td>
@@ -912,18 +921,19 @@ function renderBookingsTable() {
 }
 
 function collectBookingForm() {
-  const period = els.periodSelect.value;
-  const dates = getSelectedDates(period);
-  const slotKeys = getSlotKeys(dates, period);
+  const slotKeys = [...state.selectedSlots].sort(compareSlotKeys);
+  const dates = getDatesFromSlotKeys(slotKeys);
+  const summary = summarizeSelectedSlots(slotKeys);
+  const period = summary.slotCount === 1 ? splitSlotKey(slotKeys[0])[1] : summary.remainderCount ? "mixed" : "full";
   const clientName = els.clientNameInput.value.trim();
   const phone = els.phoneInput.value.trim();
-  const price = Number(els.priceInput.value);
+  const price = summary.price;
   const deposit = Number(els.depositInput.value || 0);
   const notes = els.notesInput.value.trim();
   const id = els.editingBookingId.value || null;
 
-  if (!dates.length) {
-    toast("اختر يومًا واحدًا على الأقل من التقويم.", "error");
+  if (!slotKeys.length) {
+    toast("اختر فترة واحدة على الأقل من التقويم.", "error");
     return null;
   }
   if (!clientName || clientName.length < 2) {
@@ -939,7 +949,18 @@ function collectBookingForm() {
     return null;
   }
 
-  return { id, dates, slotKeys, period, clientName, phone, price, deposit, notes };
+  return {
+    id,
+    dates,
+    slotKeys,
+    period,
+    pricingSummary: summary,
+    clientName,
+    phone,
+    price,
+    deposit,
+    notes
+  };
 }
 
 async function saveBooking(booking) {
@@ -950,7 +971,7 @@ async function saveBooking(booking) {
   await runTransaction(db, async (transaction) => {
     const oldSnapshot = booking.id ? await transaction.get(bookingRef) : null;
     const oldSlotKeys = oldSnapshot?.exists()
-      ? oldSnapshot.data().slotKeys || getSlotKeys(oldSnapshot.data().dates || [], oldSnapshot.data().period)
+      ? getBookingSlotKeys(oldSnapshot.data())
       : [];
 
     const slotSnapshots = [];
@@ -987,6 +1008,7 @@ async function saveBooking(booking) {
       deposit: booking.deposit,
       notes: booking.notes,
       slotKeys: booking.slotKeys,
+      pricingSummary: booking.pricingSummary,
       currency: "USD",
       createdAt: oldSnapshot?.data()?.createdAt || serverTimestamp(),
       updatedAt: serverTimestamp()
@@ -996,7 +1018,7 @@ async function saveBooking(booking) {
 
 async function deleteBooking(booking) {
   const batch = writeBatch(db);
-  const slotKeys = booking.slotKeys || getSlotKeys(booking.dates || [], booking.period);
+  const slotKeys = getBookingSlotKeys(booking);
 
   batch.delete(doc(db, "bookings", booking.id));
   slotKeys.forEach((slotKey) => batch.delete(doc(db, "bookingSlots", slotKey)));
@@ -1018,7 +1040,7 @@ function loadBookingForEdit(booking) {
   els.phoneInput.value = booking.phone || "";
   els.depositInput.value = booking.deposit || 0;
   els.notesInput.value = booking.notes || "";
-  state.selectedSlots = new Set(booking.slotKeys || getSlotKeys(booking.dates || [], booking.period));
+  state.selectedSlots = new Set(getBookingSlotKeys(booking));
   updateSelectedSummary();
   renderCalendar();
   els.bookingForm.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1028,7 +1050,7 @@ function resetBookingForm(clearSelection = true) {
   els.formTitle.textContent = "تفاصيل الحجز";
   els.editingBookingId.value = "";
   els.bookingForm.reset();
-  els.periodSelect.value = "morning";
+  els.periodSelect.value = "auto";
   els.depositInput.value = 0;
   els.cancelEditBtn.classList.add("is-hidden");
   if (clearSelection) state.selectedSlots.clear();
@@ -1056,7 +1078,7 @@ function exportWeeklyReport() {
       booking.clientName || "",
       booking.phone || "",
       (booking.dates || []).join(" | "),
-      periodLabels[booking.period] || booking.period,
+      formatBookingPeriod(booking),
       booking.price || 0,
       booking.deposit || 0,
       "USD",
@@ -1108,42 +1130,79 @@ function buildBookedSlotMap() {
   state.bookings.forEach((booking) => {
     const currentEditId = els.editingBookingId.value;
     if (currentEditId && booking.id === currentEditId) return;
-    const slotKeys = booking.slotKeys || getSlotKeys(booking.dates || [], booking.period);
+    const slotKeys = getBookingSlotKeys(booking);
     slotKeys.forEach((slotKey) => map.set(slotKey, booking));
   });
   return map;
 }
 
-function getSelectedDates(period) {
-  const dates = new Set();
-  state.selectedSlots.forEach((slotKey) => {
-    const [date, slotPeriod] = splitSlotKey(slotKey);
-    if (period === "full" || slotPeriod === period) dates.add(date);
-  });
-  return [...dates].sort();
+function getBookingSlotKeys(booking) {
+  if (Array.isArray(booking.slotKeys) && booking.slotKeys.length) {
+    return [...booking.slotKeys].sort(compareSlotKeys);
+  }
+  return getSlotKeys(booking.dates || [], booking.period);
+}
+
+function formatBookingPeriod(booking) {
+  const slotKeys = getBookingSlotKeys(booking);
+  if (slotKeys.length > 1) return `${slotKeys.length} فترات`;
+  return periodLabels[booking.period] || booking.period || "-";
+}
+
+function getDatesFromSlotKeys(slotKeys) {
+  return [...new Set(slotKeys.map((slotKey) => splitSlotKey(slotKey)[0]))].sort();
 }
 
 function getSlotKeys(dates, period) {
+  if (period === "mixed" || period === "auto") return [];
   const periods = period === "full" ? ["morning", "evening"] : [period];
   return dates.flatMap((date) => periods.map((item) => makeSlotKey(date, item)));
 }
 
-function calculateBookingPrice(dates, period) {
-  return Number(
-    dates
-      .reduce((total, dateKey) => {
-        const prices = getDayPrices(dateKey);
-        return total + Number(prices[period] || 0);
-      }, 0)
-      .toFixed(2)
-  );
+function summarizeSelectedSlots(slotKeys) {
+  const sorted = [...slotKeys].sort(compareSlotKeys);
+  let price = 0;
+  let fullBlocks = 0;
+  let remainderCount = 0;
+
+  for (let index = 0; index < sorted.length; index += 2) {
+    const pair = sorted.slice(index, index + 2);
+    if (pair.length === 2) {
+      const dateKey = splitSlotKey(pair[0])[0];
+      price += getDayPrices(dateKey).full;
+      fullBlocks += 1;
+    } else {
+      const [dateKey, period] = splitSlotKey(pair[0]);
+      price += getDayPrices(dateKey)[period];
+      remainderCount += 1;
+    }
+  }
+
+  return {
+    slotCount: sorted.length,
+    fullBlocks,
+    remainderCount,
+    price: Number(price.toFixed(2)),
+    slotKeys: sorted
+  };
 }
 
 function getDayPrices(dateKey) {
   const source = isFeaturedDate(dateKey) ? state.settings.featuredPrices : state.settings.standardPrices;
   const morning = Number(source.morning || 0);
   const evening = Number(source.evening || 0);
-  return { morning, evening, full: morning + evening };
+  const full = Number(source.full ?? morning + evening);
+  return { morning, evening, full };
+}
+
+function compareSlotKeys(a, b) {
+  return slotOrderValue(a) - slotOrderValue(b);
+}
+
+function slotOrderValue(slotKey) {
+  const [dateKey, period] = splitSlotKey(slotKey);
+  const date = parseDateKey(dateKey);
+  return date.getTime() + (period === "evening" ? 12 * 60 * 60 * 1000 : 0);
 }
 
 function isFeaturedDate(dateKey) {
@@ -1198,19 +1257,32 @@ function parseDateKey(dateKey) {
 }
 
 function formatShortDate(dateKey) {
-  return parseDateKey(dateKey).toLocaleDateString("ar", {
-    day: "2-digit",
-    month: "2-digit"
-  });
+  const date = parseDateKey(dateKey);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}-${month}-${date.getFullYear()}`;
 }
 
 function formatLongDate(dateKey) {
-  return parseDateKey(dateKey).toLocaleDateString("ar", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric"
-  });
+  const date = parseDateKey(dateKey);
+  return `${formatWeekday(dateKey)} ${date.getDate()} ${arabicMonthNames[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function formatWeekday(dateKey) {
+  return arabicWeekdayNames[parseDateKey(dateKey).getDay()];
+}
+
+function formatMonthYear(date) {
+  return `${arabicMonthNames[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function getDateDisplayParts(dateKey) {
+  const date = parseDateKey(dateKey);
+  return {
+    weekday: formatWeekday(dateKey),
+    numeric: formatShortDate(dateKey),
+    monthYear: formatMonthYear(date)
+  };
 }
 
 function makeSlotKey(date, period) {

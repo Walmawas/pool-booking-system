@@ -14,11 +14,13 @@ export const defaultSettings = {
   eveningPrice: 120,
   standardPrices: {
     morning: 100,
-    evening: 120
+    evening: 120,
+    full: 200
   },
   featuredPrices: {
     morning: 130,
-    evening: 150
+    evening: 150,
+    full: 260
   },
   featuredWeekdays: [4, 5, 6],
   featuredDates: [],
