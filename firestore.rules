@@ -6,11 +6,12 @@ service cloud.firestore {
         && request.auth.token.email == 'admin@example.com';
     }
 
-    match /bookings/{bookingId} {
-      allow read, create, update, delete: if isAdmin();
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
 
-    match /bookingSlots/{slotId} {
+    match /media/{mediaId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }

@@ -3,6 +3,7 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebas
 import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db, firebaseBootstrap } from '../firebase';
 import { defaultSettings, useRealtimeData } from '../hooks/useRealtimeData';
+import MediaManager from '../components/MediaManager';
 
 const emptyForm = {
   name: '',
@@ -495,6 +496,8 @@ const AdminPage = () => {
           حفظ الأسعار
         </button>
       </div>
+
+      <MediaManager />
 
       <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-5 text-white">
         <h2 className="text-xl font-bold text-gold-300">إدارة المنتجات ({products.length}) - مباعة: {soldCount}</h2>
