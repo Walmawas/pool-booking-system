@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="نظام حجز مسبح الريحان دركوش مع رزنامة مباشرة وأسعار وتواصل سريع."
+    />
+    <title>مسبح الريحان دركوش</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="loadingOverlay" class="loading-overlay is-active">
+      <div class="spinner"></div>
+      <p>جاري تجهيز النظام...</p>
+    </div>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <main class="app-shell">
+      <section id="publicView" class="public-view">
+        <header class="public-shell-header">
+          <nav class="public-nav">
+            <a class="brand-mark" href="#home">
+              <span>مسبح الريحان</span>
+              <strong>دركوش</strong>
+            </a>
+            <div class="public-links" aria-label="روابط الموقع">
+              <a data-route-link href="#home">الرئيسية</a>
+              <a data-route-link href="#calendar">الرزنامة</a>
+              <a data-route-link href="#prices">الأسعار</a>
+              <a data-route-link href="#studio">الاستوديو</a>
+              <a data-route-link href="#payment">الدفع</a>
+              <a data-route-link href="#contact">تواصل</a>
+              <a class="admin-link" href="#admin">الإدارة</a>
+            </div>
+          </nav>
+        </header>
+
+        <section id="pageHome" class="public-page public-hero" data-public-page="home">
+          <div class="hero-content">
+            <div>
+              <span class="eyebrow">Pool Booking</span>
+              <h1>احجز وقتك في مسبح الريحان بسهولة ووضوح</h1>
+              <p>
+                رزنامة مباشرة لمعرفة الفترات المتاحة والمحجوزة، أسعار واضحة حسب اليوم،
+                ودفع سريع عبر شام كاش مع تواصل مباشر للحجز.
+              </p>
+              <div class="hero-actions">
+                <a class="primary-action link-button" href="#calendar">عرض الرزنامة</a>
+                <a class="secondary-action link-button" href="https://wa.me/963980195144" target="_blank" rel="noopener">
+                  حجز عبر واتس اب
+                </a>
+              </div>
+            </div>
+            <div class="availability-card">
+              <span>الفترات اليومية</span>
+              <strong>صباحي 9am - 7pm</strong>
+              <strong>مسائي 9pm - 7am</strong>
+              <small>الأيام المحجوزة تظهر بالأحمر الفاتح</small>
+            </div>
+          </div>
+        </section>
+
+        <section id="pageCalendar" class="public-page panel public-calendar-panel" data-public-page="calendar">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">رزنامة الزبائن</span>
+              <h1 id="publicCalendarTitle">-</h1>
+            </div>
+            <div class="calendar-controls">
+              <select id="publicViewMode" aria-label="طريقة عرض الرزنامة">
+                <option value="week" selected>أسبوعي</option>
+                <option value="month">شهري</option>
+                <option value="day">يومي</option>
+                <option value="custom">مخصص</option>
+              </select>
+              <input id="publicStartDate" type="date" />
+              <input id="publicEndDate" type="date" />
+              <button id="publicPrevBtn" class="icon-action" type="button" title="السابق">‹</button>
+              <button id="publicTodayBtn" class="ghost-action compact" type="button">اليوم</button>
+              <button id="publicNextBtn" class="icon-action" type="button" title="التالي">›</button>
+            </div>
+          </div>
+          <div class="calendar-legend">
+            <span><i class="legend-dot available"></i>متاح</span>
+            <span><i class="legend-dot featured"></i>يوم مميز</span>
+            <span><i class="legend-dot booked"></i>محجوز</span>
+          </div>
+          <div id="publicCalendarGrid" class="customer-calendar-grid"></div>
+        </section>
+
+        <section id="pagePrices" class="public-page panel prices-panel" data-public-page="prices">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">الأسعار بالدولار</span>
+              <h1>أسعار الحجز حسب اليوم</h1>
+            </div>
+          </div>
+          <div id="publicPricesGrid" class="prices-grid"></div>
+        </section>
+
+        <section id="pageStudio" class="public-page panel studio-panel" data-public-page="studio">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">Studio</span>
+              <h1>استوديو المسبح</h1>
+            </div>
+          </div>
+          <div class="studio-grid">
+            <article class="studio-item large">
+              <div class="studio-media photo-one"></div>
+              <h3>جلسات نهارية هادئة</h3>
+            </article>
+            <article class="studio-item">
+              <div class="studio-media photo-two"></div>
+              <h3>أجواء مسائية</h3>
+            </article>
+            <article class="studio-item video-card">
+              <a class="video-frame" href="https://www.instagram.com/reel/DLmGdiWpy1X/" target="_blank" rel="noopener">
+                <span class="play-mark">▶</span>
+                <p>مشاهدة فيديو المسبح على Instagram</p>
+              </a>
+              <h3>فيديوهات المسبح</h3>
+            </article>
+          </div>
+        </section>
+
+        <section id="pagePayment" class="public-page panel payment-panel" data-public-page="payment">
+          <span class="eyebrow">Sham Cash</span>
+          <h1>الدفع أو العربون عبر شام كاش</h1>
+          <div class="payment-box">
+            <img class="sham-cash-image" src="assets/sham-cash.jpeg" alt="باركود شام كاش" />
+            <div>
+              <strong>حساب شام كاش</strong>
+              <code class="cash-account">7761926cb55beea6d9b52d09ef53c8af</code>
+              <p>
+                يرجى تحويل العربون أو ثمن الحجز إلى حساب شام كاش، ثم إرسال صورة الإشعار
+                عبر واتس اب لتأكيد الحجز.
+              </p>
+              <a class="primary-action link-button" href="https://wa.me/963980195144" target="_blank" rel="noopener">
+                إرسال إشعار الدفع
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section id="pageContact" class="public-page panel contact-panel" data-public-page="contact">
+          <span class="eyebrow">Contact</span>
+          <h1>طرق التواصل والموقع</h1>
+          <div class="contact-actions">
+            <a class="primary-action link-button" href="https://wa.me/963980195144" target="_blank" rel="noopener">
+              واتس اب: +963980195144
+            </a>
+            <a class="secondary-action link-button" href="tel:+963980195144">
+              اتصال هاتفي: +963980195144
+            </a>
+            <a class="ghost-action link-button" href="https://www.instagram.com/reel/DLmGdiWpy1X/" target="_blank" rel="noopener">
+              Instagram
+            </a>
+            <a class="ghost-action link-button" href="https://www.facebook.com/people/%D9%85%D8%B3%D8%A8%D8%AD-%D8%A7%D9%84%D8%B1%D9%8A%D8%AD%D8%A7%D9%86-%D8%AF%D8%B1%D9%83%D9%88%D8%B4/61561023182062/" target="_blank" rel="noopener">
+              Facebook Page
+            </a>
+            <a class="ghost-action link-button" href="https://www.facebook.com/drkwsh.msbh.alryhan/" target="_blank" rel="noopener">
+              Facebook Profile
+            </a>
+            <a class="ghost-action link-button" href="https://www.google.com/maps/place/%D9%85%D8%B3%D8%A8%D8%AD+%D8%A7%D9%84%D8%B1%D9%8A%D8%AD%D8%A7%D9%86+%D8%AF%D8%B1%D9%83%D9%88%D8%B4%E2%80%AD/data=!4m2!3m1!1s0x1525b1003e7d6461:0x465b5dfa3cdeeb45?sa=X&ved=1t:242&ictx=111" target="_blank" rel="noopener">
+              الموقع على Google Maps
+            </a>
+          </div>
+        </section>
+      </section>
+
+      <section id="loginView" class="login-view is-hidden">
+        <div class="login-card">
+          <span class="eyebrow">Pool Booking System</span>
+          <h1>نظام حجز المسابح</h1>
+          <p>تسجيل دخول آمن للمدير لإدارة التقويم، الأسعار، الحجوزات والتقارير.</p>
+
+          <form id="loginForm" class="form-grid">
+            <label>
+              البريد الإلكتروني
+              <input id="emailInput" type="email" autocomplete="email" required />
+            </label>
+            <label>
+              كلمة المرور
+              <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" required />
+            </label>
+            <button class="primary-action" type="submit">تسجيل الدخول</button>
+            <a class="ghost-action link-button" href="#home">العودة لواجهة الزبائن</a>
+          </form>
+
+          <p class="hint">
+            غيّر بريد المدير وإعدادات Firebase من ملف
+            <code>firebase-config.js</code>.
+          </p>
+        </div>
+      </section>
+
+      <section id="appView" class="dashboard is-hidden">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">لوحة التحكم</span>
+            <h1>إدارة حجوزات المسبح</h1>
+          </div>
+          <div class="topbar-actions">
+            <a class="ghost-action link-button" href="#home">واجهة الزبائن</a>
+            <span id="userEmail" class="user-chip"></span>
+            <button id="logoutBtn" class="ghost-action" type="button">خروج</button>
+          </div>
+        </header>
+
+        <section class="stats-grid" aria-label="إحصائيات الحجوزات">
+          <article class="stat-card"><span>عدد الحجوزات</span><strong id="bookingCount">0</strong></article>
+          <article class="stat-card"><span>إجمالي الإيرادات</span><strong id="totalRevenue">0</strong></article>
+          <article class="stat-card"><span>إجمالي العربون</span><strong id="totalDeposits">0</strong></article>
+          <article class="stat-card"><span>الفترات المحجوزة</span><strong id="reservedSlots">0</strong></article>
+        </section>
+
+        <section class="workspace-grid">
+          <div class="panel calendar-panel" id="calendarCapture">
+            <div class="panel-header">
+              <div>
+                <span class="eyebrow">التقويم</span>
+                <h2 id="monthTitle">-</h2>
+              </div>
+              <div class="month-actions">
+                <button id="prevMonthBtn" class="icon-action" type="button" title="الشهر السابق">‹</button>
+                <button id="todayBtn" class="ghost-action compact" type="button">اليوم</button>
+                <button id="nextMonthBtn" class="icon-action" type="button" title="الشهر التالي">›</button>
+              </div>
+            </div>
+
+            <div class="calendar-legend">
+              <span><i class="legend-dot available"></i>متاح</span>
+              <span><i class="legend-dot selected"></i>محدد</span>
+              <span><i class="legend-dot booked"></i>محجوز</span>
+            </div>
+
+            <div class="weekdays">
+              <span>السبت</span><span>الأحد</span><span>الإثنين</span><span>الثلاثاء</span>
+              <span>الأربعاء</span><span>الخميس</span><span>الجمعة</span>
+            </div>
+            <div id="calendarGrid" class="calendar-grid"></div>
+          </div>
+
+          <aside class="side-stack">
+            <form id="bookingForm" class="panel form-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">حجز جديد</span>
+                  <h2 id="formTitle">تفاصيل الحجز</h2>
+                </div>
+                <button id="resetFormBtn" class="ghost-action compact" type="button">تفريغ</button>
+              </div>
+
+              <input id="editingBookingId" type="hidden" />
+              <div class="selected-summary"><span>الأيام المختارة</span><strong id="selectedDaysCount">0</strong></div>
+
+              <label>
+                نوع الحجز
+                <select id="periodSelect" required>
+                  <option value="morning">صباحي (9am - 7pm)</option>
+                  <option value="evening">مسائي (9pm - 7am)</option>
+                  <option value="full">كامل</option>
+                </select>
+              </label>
+
+              <div class="two-columns">
+                <label>اسم العميل <input id="clientNameInput" type="text" minlength="2" required /></label>
+                <label>رقم الهاتف <input id="phoneInput" type="tel" required /></label>
+              </div>
+
+              <div class="two-columns">
+                <label>السعر <input id="priceInput" type="number" min="0" step="0.01" readonly /></label>
+                <label>العربون <input id="depositInput" type="number" min="0" step="0.01" value="0" /></label>
+              </div>
+
+              <label>ملاحظات <textarea id="notesInput" rows="3" placeholder="ملاحظات اختيارية"></textarea></label>
+
+              <div class="form-actions">
+                <button class="primary-action" type="submit">حفظ الحجز</button>
+                <button id="cancelEditBtn" class="ghost-action is-hidden" type="button">إلغاء التعديل</button>
+              </div>
+            </form>
+
+            <section class="panel settings-panel">
+              <div class="panel-header">
+                <div>
+                  <span class="eyebrow">الأسعار والأيام المميزة</span>
+                  <h2>إعدادات التسعير</h2>
+                </div>
+              </div>
+
+              <form id="settingsForm" class="form-grid">
+                <h3 class="settings-subtitle">الأيام العادية</h3>
+                <div class="two-columns">
+                  <label>صباحي <input id="morningPriceInput" type="number" min="0" step="0.01" required /></label>
+                  <label>مسائي <input id="eveningPriceInput" type="number" min="0" step="0.01" required /></label>
+                </div>
+                <label>كامل عادي <input id="fullPriceInput" type="number" readonly /></label>
+
+                <h3 class="settings-subtitle">الأيام المميزة</h3>
+                <div class="two-columns">
+                  <label>صباحي مميز <input id="featuredMorningPriceInput" type="number" min="0" step="0.01" required /></label>
+                  <label>مسائي مميز <input id="featuredEveningPriceInput" type="number" min="0" step="0.01" required /></label>
+                </div>
+                <label>كامل مميز <input id="featuredFullPriceInput" type="number" readonly /></label>
+
+                <label>
+                  العملة
+                  <select id="currencySelect">
+                    <option value="USD">USD</option>
+                  </select>
+                </label>
+
+                <fieldset class="weekday-fieldset">
+                  <legend>أيام أسبوعية مميزة</legend>
+                  <label><input type="checkbox" name="featuredWeekday" value="4" /> الخميس</label>
+                  <label><input type="checkbox" name="featuredWeekday" value="5" /> الجمعة</label>
+                  <label><input type="checkbox" name="featuredWeekday" value="6" /> السبت</label>
+                  <label><input type="checkbox" name="featuredWeekday" value="0" /> الأحد</label>
+                  <label><input type="checkbox" name="featuredWeekday" value="1" /> الإثنين</label>
+                  <label><input type="checkbox" name="featuredWeekday" value="2" /> الثلاثاء</label>
+                  <label><input type="checkbox" name="featuredWeekday" value="3" /> الأربعاء</label>
+                </fieldset>
+
+                <div class="custom-date-row">
+                  <label>تاريخ مميز مخصص <input id="featuredDateInput" type="date" /></label>
+                  <button id="addFeaturedDateBtn" class="ghost-action compact" type="button">إضافة</button>
+                </div>
+                <div id="featuredDatesList" class="date-chip-list"></div>
+
+                <button class="secondary-action" type="submit">حفظ الإعدادات</button>
+              </form>
+            </section>
+          </aside>
+        </section>
+
+        <section class="panel bookings-panel">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">الحجوزات</span>
+              <h2>قائمة الحجوزات</h2>
+            </div>
+            <div class="report-actions">
+              <button id="exportWeeklyBtn" class="ghost-action compact" type="button">تصدير التقرير الأسبوعي</button>
+              <button id="shareCalendarBtn" class="secondary-action compact" type="button">مشاركة التقويم كصورة</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>العميل</th><th>الهاتف</th><th>التواريخ</th><th>النوع</th>
+                  <th>السعر</th><th>العربون</th><th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="bookingsTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div id="slotModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true">
+      <article class="slot-modal">
+        <button id="closeSlotModalBtn" class="modal-close" type="button" aria-label="إغلاق">×</button>
+        <span id="slotModalStatus" class="status-pill">متاح</span>
+        <h2 id="slotModalTitle">تفاصيل اليوم</h2>
+        <p id="slotModalMeta"></p>
+        <strong id="slotModalPrice"></strong>
+        <div class="modal-actions">
+          <a class="primary-action link-button" href="https://wa.me/963980195144" target="_blank" rel="noopener">واتس اب</a>
+          <a class="secondary-action link-button" href="tel:+963980195144">اتصال</a>
+        </div>
+      </article>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
