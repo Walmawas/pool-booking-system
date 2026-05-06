@@ -1,68 +1,283 @@
-# مجوهرات جود - Joud Jewelry
 
-تطبيق React + Firebase لإدارة وعرض منتجات الذهب مع تحديثات لحظية للأسعار.
+# نظام حجوزات المسبح - Pool Booking System
 
-## التشغيل السريع
+تطبيق React + Firebase لإدارة حجوزات المسبح مع تقويم تفاعلي وتحديثات فورية.
+
+---
+
+## 🚀 التشغيل السريع
 
 ```bash
 npm install
-```
+````
 
 أنشئ ملف `.env` من المثال:
 
-- **Windows:** `copy .env.example .env`
-- **macOS / Linux:** `cp .env.example .env`
+* **Windows:** `copy .env.example .env`
+* **macOS / Linux:** `cp .env.example .env`
 
-املأ `.env` بقيم مشروعك من [Firebase Console](https://console.firebase.google.com) → Project settings → Your apps.
+ثم املأ القيم من Firebase:
+
+```env
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+
+VITE_ADMIN_EMAIL=admin@example.com
+```
+
+تشغيل المشروع:
 
 ```bash
 npm run dev
 ```
 
-## إعداد Firebase (مطلوب ليعمل التطبيق بالكامل)
+---
 
-1. **إنشاء مشروع** وتمكين **Cloud Firestore**.
-2. **Authentication** → تفعيل طريقة **Email/Password**.
-3. إنشاء مستخدم مشرف بنفس البريد الموجود في `VITE_ADMIN_EMAIL` داخل `.env` (القيمة الافتراضية في المثال: `admin@joud.local`). يمكنك تغيير البريد، لكن يجب أن يتطابق مع:
-   - الملف `firestore.rules` (دالة `isAllowedAdmin` → مقارنة `request.auth.token.email`)
-   - المتغير `VITE_ADMIN_EMAIL` في `.env`
-4. نشر قواعد الأمان:
+## 🔥 إعداد Firebase (مهم جدًا)
+
+1. ادخل إلى Firebase Console
+2. أنشئ مشروع جديد
+3. فعّل الخدمات التالية:
+
+### ✅ Firestore Database
+
+* Create Database
+* Start in test mode
+
+### ✅ Authentication
+
+* فعّل:
+
+  * Email / Password
+
+---
+
+## 👤 حساب المشرف (Admin)
+
+* أنشئ مستخدم من:
+  Authentication → Users
+
+مثال:
+
+```
+Email: admin@example.com
+Password: 12345678
+```
+
+⚠️ مهم:
+يجب أن يتطابق مع:
+
+* `VITE_ADMIN_EMAIL` داخل `.env`
+* قواعد Firestore
+
+---
+
+## 🔐 قواعد الأمان (Firestore Rules)
+
+استبدل القواعد بـ:
+
+```js
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null &&
+             request.auth.token.email == "admin@example.com";
+    }
+
+    match /bookings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
+```
+
+ثم نفّذ:
 
 ```bash
 firebase deploy --only firestore:rules
 ```
 
-(يتطلب تثبيت [Firebase CLI](https://firebase.google.com/docs/cli) وربط المشروع بـ `firebase login` و`firebase use`.)
+---
 
-القواعد الافتراضية في المستودع تسمح بـ **قراءة عامة** للمنتجات والإعدادات، و**الكتابة** فقط لحساب المشرف المعرّف في `firestore.rules`.
+## 📅 الميزات
 
-## المزايا
+### 🗓️ التقويم
 
-- عرض المنتجات مباشرة من Firestore مع تحديث فوري.
-- لوحة إدارة بتسجيل دخول **Firebase (بريد + كلمة مرور)** وليس كلمة مرور داخل الحزمة.
-- **استوديو الوسائط**: إضافة وعرض الصور والفيديوهات من قسم الإدارة.
-- فلترة حسب التصنيف + تبديل عملة USD/SYP مع تذكّر الاختيار في المتصفح.
-- زر واتساب تلقائي لكل منتج.
-- Lazy loading للصور + Skeleton loading.
-- التحقق من متغيرات البيئة عند التشغيل ورسالة واضحة إن نقص شيء.
+* عرض شهري
+* كل يوم يحتوي:
 
-## إدارة الاستوديو
+  * صباحي
+  * مسائي
+* منع الحجز المكرر
+* تلوين:
 
-يمكن للمشرف إضافة صور وفيديوهات من قسم الإدارة لعرضها في صفحة الاستوديو:
+  * متاح
+  * محجوز
+  * محدد
 
-1. اذهب إلى **لوحة الإدارة** (`/admin`)
-2. سجّل الدخول بحساب المشرف
-3. في قسم **إدارة الوسائط (الاستوديو)**:
-   - أدخل عنوان الوسائط
-   - أدخل رابط الصورة أو الفيديو
-   - اختر نوع الوسائط (صورة أو فيديو)
-   - اضغط **إضافة الوسائط**
-4. ستظهر الوسائط في صفحة **الاستوديو** (`/studio`) مع فلترة حسب النوع
+---
 
-## البناء للإنتاج
+### ➕ نظام الحجز
+
+* اسم العميل
+* رقم الهاتف
+* ملاحظات
+* اختيار الأيام والفترات
+* حساب السعر تلقائي
+
+---
+
+### 💰 نظام الأسعار
+
+* صباحي
+* مسائي
+* كامل
+* قابل للتعديل
+
+---
+
+### 📊 لوحة التحكم (Admin Dashboard)
+
+* عدد الحجوزات
+* إجمالي الإيرادات
+* عرض قائمة الحجوزات
+* تحديث فوري (Realtime)
+
+---
+
+### 🔔 ميزات إضافية
+
+* Firebase Authentication
+* Realtime Firestore
+* إشعارات (اختياري)
+* زر واتساب للحجز
+* تصميم RTL عربي
+* Responsive (موبايل + كمبيوتر)
+
+---
+
+## 🧠 هيكل قاعدة البيانات
+
+```json
+bookings: {
+  id: {
+    clientName: "string",
+    phone: "string",
+    dates: ["2026-5-10-صباحي"],
+    period: "صباحي",
+    price: 100,
+    notes: "string",
+    createdAt: timestamp
+  }
+}
+```
+
+---
+
+## 🧪 التطوير
+
+```bash
+npm run dev
+```
+
+---
+
+## 🏗️ البناء للإنتاج
 
 ```bash
 npm run build
 ```
 
-ثم ارفع مجلد `dist` إلى أي استضافة ثابتة (مثل Firebase Hosting).
+الناتج سيكون داخل:
+
+```
+dist/
+```
+
+---
+
+## 🌍 النشر
+
+يمكنك النشر على:
+
+### 🚀 Vercel
+
+* Import من GitHub
+* Build: `npm run build`
+* Output: `dist`
+
+---
+
+### 🔥 Firebase Hosting
+
+```bash
+firebase deploy
+```
+
+---
+
+## 📱 التكامل مع تطبيق الجوال
+
+هذا المشروع مرتبط بـ:
+
+* تطبيق React Native (Expo)
+* نفس Firebase
+
+👉 يعني:
+✔ نفس الحجوزات
+✔ نفس البيانات
+✔ تحديث فوري بين الموقع والتطبيق
+
+---
+
+## 💡 ملاحظات مهمة
+
+* لا ترفع ملف `.env` إلى GitHub
+* تأكد من حماية Firestore قبل الإنتاج
+* استخدم أسعار حقيقية من لوحة التحكم لاحقًا
+
+---
+
+## 🔥 مستقبل المشروع
+
+يمكن تطويره ليشمل:
+
+* 💳 دفع إلكتروني
+* 📲 إشعارات واتساب تلقائية
+* 🏊‍♂️ إدارة عدة مسابح
+* 🌐 موقع عام للعملاء + لوحة خاصة للإدارة
+
+---
+
+## 👨‍💻 المطور
+
+تم تطويره كنظام حجوزات احترافي قابل للتوسع التجاري.
+
+```
+
+---
+
+# 💥 ماذا فعلنا الآن؟
+
+✔ حولنا المشروع من متجر ذهب ❌  
+✔ إلى نظام حجوزات احترافي ✔  
+✔ متوافق مع Firebase ✔  
+✔ جاهز للنشر ✔  
+
+---
+
+## 🔥 الخطوة التالية (أنصحك بها)
+
+هل تريد أضيف لك داخل المشروع:
+
+### 1️⃣ نظام واتساب تلقائي حقيقي (API وليس فقط رابط)  
+### 2️⃣ نظام دفع Stripe 💳  
+### 3️⃣ تعدد مسابح (تحول المشروع إلى منصة)
