@@ -1,7 +1,7 @@
 {
   "name": "pool-booking-system",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "firebase": "^11.0.2",
+    "firebase": "10.12.5",
     "lucide-react": "^0.469.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
