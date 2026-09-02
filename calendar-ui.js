@@ -4,25 +4,17 @@
   const MONTHS = ["كانون الثاني", "شباط", "آذار", "نيسان", "أيار", "حزيران", "تموز", "آب", "أيلول", "تشرين الأول", "تشرين الثاني", "كانون الأول"];
 
   function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, (char) => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
-    }[char]));
+    return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
   }
-
   function parseDateKey(key) {
     const [year, month, day] = key.split("-").map(Number);
     return new Date(year, month - 1, day);
   }
-
   function formatDate(key) {
     const date = parseDateKey(key);
     return { day: date.getDate(), weekday: WEEKDAYS[date.getDay()], month: MONTHS[date.getMonth()] };
   }
-
-  function extractDate(card) {
-    return card.querySelector("[data-public-slot]")?.dataset.date || "";
-  }
-
+  function extractDate(card) { return card.querySelector("[data-public-slot]")?.dataset.date || ""; }
   function todayKey() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -31,7 +23,6 @@
   function rebuildCard(card) {
     const dateKey = extractDate(card);
     if (!dateKey || card.dataset.redesigned === "1") return;
-
     const info = formatDate(dateKey);
     const originalSlots = [...card.querySelectorAll("[data-public-slot]")];
     const morning = originalSlots.find((slot) => slot.dataset.period === "morning");
@@ -67,21 +58,15 @@
       </div>`;
   }
 
-  function render(grid) {
-    grid.querySelectorAll(":scope > .customer-day-card").forEach((card) => rebuildCard(card));
-  }
+  function render(grid) { grid.querySelectorAll(":scope > .customer-day-card").forEach(rebuildCard); }
 
   function install() {
     const grid = document.getElementById(GRID_ID);
-    if (!grid) {
-      window.setTimeout(install, 50);
-      return;
-    }
+    if (!grid) { window.setTimeout(install, 50); return; }
     if (grid.dataset.redesignInstalled === "1") return;
     grid.dataset.redesignInstalled = "1";
     injectStyles();
     render(grid);
-
     const observer = new MutationObserver(() => render(grid));
     observer.observe(grid, { childList: true });
   }
@@ -95,8 +80,8 @@
       .customer-day-card{position:relative!important;display:block!important;min-height:0!important;padding:14px 15px 15px!important;border:1px solid rgba(22,148,137,.18)!important;border-radius:24px!important;background:rgba(255,255,255,.96)!important;box-shadow:0 7px 22px rgba(24,63,72,.08)!important;overflow:hidden!important;}
       .customer-day-card.featured-day{border-color:rgba(22,148,137,.58)!important;}
       .customer-day-card.is-today{box-shadow:0 9px 26px rgba(16,110,103,.14)!important;}
-      .redesigned-day-head{position:relative;display:flex;align-items:center;gap:12px;min-height:58px;padding:0 0 10px;}
-      .redesigned-day-name{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;flex:1;order:1;padding-inline-end:2px;}
+      .redesigned-day-head{position:relative;display:flex;align-items:center;direction:ltr;gap:12px;min-height:58px;padding:0 0 10px;}
+      .redesigned-day-name{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;flex:1;order:1;padding-inline-end:2px;direction:rtl;}
       .redesigned-day-name strong{font-size:1.08rem;font-weight:800;color:#4f6077;line-height:1.2;}
       .redesigned-day-name span{font-size:.92rem;font-weight:600;color:#65748a;line-height:1.15;}
       .redesigned-day-number{display:grid;place-items:center;order:2;width:58px;height:58px;border-radius:18px;background:#edf8f6;color:#075f5a;font-size:1.85rem;font-weight:800;line-height:1;flex:0 0 58px;}
