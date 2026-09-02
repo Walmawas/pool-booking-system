@@ -21,5 +21,20 @@ service cloud.firestore {
       allow create, update: if isAdmin();
       allow delete: if false;
     }
+
+    // Booking data is private to the admin. Public availability is exposed
+    // through bookingSlots, not the full booking documents.
+    match /bookings/{bookingId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    match /bookingSlots/{slotId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
