@@ -46,60 +46,38 @@ npm run dev
 ### ✅ Firestore Database
 
 * Create Database
-* Start in test mode
+* لا تستخدم Test Mode في الإنتاج.
 
 ### ✅ Authentication
 
 * فعّل:
-
   * Email / Password
 
 ---
 
 ## 👤 حساب المشرف (Admin)
 
-* أنشئ مستخدم من:
-  Authentication → Users
+أنشئ المستخدم من:
 
-مثال:
+`Authentication → Users`
 
+الحساب الإداري المستخدم في التطبيق والقواعد هو:
+
+```text
+admin@example.com
 ```
-Email: admin@example.com
-Password: 12345678
-```
 
-⚠️ مهم:
-يجب أن يتطابق مع:
+يجب أن يتطابق البريد مع قيمة `VITE_ADMIN_EMAIL` وقواعد Firestore.
 
-* `VITE_ADMIN_EMAIL` داخل `.env`
-* قواعد Firestore
+> كلمة المرور لا تُخزن في التطبيق أو Firestore؛ تتم مصادقة المستخدم بواسطة Firebase Authentication.
 
 ---
 
 ## 🔐 قواعد الأمان (Firestore Rules)
 
-استبدل القواعد بـ:
+القواعد الحالية تمنع الوصول العام إلى بيانات الحجوزات، وتسمح بالوصول العام فقط إلى البيانات اللازمة للواجهة العامة مثل حالة الفترات والإعدادات العامة. عمليات إنشاء/تعديل/حذف بيانات الإدارة تتطلب الحساب الإداري.
 
-```js
-rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    function isAdmin() {
-      return request.auth != null &&
-             request.auth.token.email == "admin@example.com";
-    }
-
-    match /bookings/{id} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-  }
-}
-```
-
-ثم نفّذ:
+لتطبيق القواعد:
 
 ```bash
 firebase deploy --only firestore:rules
@@ -113,17 +91,13 @@ firebase deploy --only firestore:rules
 
 * عرض شهري
 * كل يوم يحتوي:
-
   * صباحي
   * مسائي
-* منع الحجز المكرر
+* منع الحجز المكرر عبر Transaction
 * تلوين:
-
   * متاح
   * محجوز
   * محدد
-
----
 
 ### ➕ نظام الحجز
 
@@ -133,16 +107,13 @@ firebase deploy --only firestore:rules
 * اختيار الأيام والفترات
 * حساب السعر تلقائي
 
----
-
 ### 💰 نظام الأسعار
 
 * صباحي
 * مسائي
 * كامل
-* قابل للتعديل
-
----
+* أسعار خاصة للأيام المميزة
+* قابل للتعديل من لوحة الإدارة
 
 ### 📊 لوحة التحكم (Admin Dashboard)
 
@@ -151,13 +122,10 @@ firebase deploy --only firestore:rules
 * عرض قائمة الحجوزات
 * تحديث فوري (Realtime)
 
----
-
 ### 🔔 ميزات إضافية
 
 * Firebase Authentication
 * Realtime Firestore
-* إشعارات (اختياري)
 * زر واتساب للحجز
 * تصميم RTL عربي
 * Responsive (موبايل + كمبيوتر)
@@ -166,118 +134,35 @@ firebase deploy --only firestore:rules
 
 ## 🧠 هيكل قاعدة البيانات
 
-```json
-bookings: {
-  id: {
-    clientName: "string",
-    phone: "string",
-    dates: ["2026-5-10-صباحي"],
-    period: "صباحي",
-    price: 100,
-    notes: "string",
-    createdAt: timestamp
-  }
-}
+```text
+bookings/{bookingId}
+  - clientName
+  - phone
+  - dates
+  - period
+  - price
+  - deposit
+  - notes
+  - slotKeys
+  - pricingSummary
+  - currency
+  - createdAt
+  - updatedAt
+
+bookingSlots/{date-period}
+  - bookingId
+  - date
+  - period
+  - updatedAt
+
+settings/pricing
+  - standardPrices
+  - featuredPrices
+  - featuredWeekdays
+  - featuredDates
+  - currency
 ```
 
----
+### 🔒 ملاحظة أمنية
 
-## 🧪 التطوير
-
-```bash
-npm run dev
-```
-
----
-
-## 🏗️ البناء للإنتاج
-
-```bash
-npm run build
-```
-
-الناتج سيكون داخل:
-
-```
-dist/
-```
-
----
-
-## 🌍 النشر
-
-يمكنك النشر على:
-
-### 🚀 Vercel
-
-* Import من GitHub
-* Build: `npm run build`
-* Output: `dist`
-
----
-
-### 🔥 Firebase Hosting
-
-```bash
-firebase deploy
-```
-
----
-
-## 📱 التكامل مع تطبيق الجوال
-
-هذا المشروع مرتبط بـ:
-
-* تطبيق React Native (Expo)
-* نفس Firebase
-
-👉 يعني:
-✔ نفس الحجوزات
-✔ نفس البيانات
-✔ تحديث فوري بين الموقع والتطبيق
-
----
-
-## 💡 ملاحظات مهمة
-
-* لا ترفع ملف `.env` إلى GitHub
-* تأكد من حماية Firestore قبل الإنتاج
-* استخدم أسعار حقيقية من لوحة التحكم لاحقًا
-
----
-
-## 🔥 مستقبل المشروع
-
-يمكن تطويره ليشمل:
-
-* 💳 دفع إلكتروني
-* 📲 إشعارات واتساب تلقائية
-* 🏊‍♂️ إدارة عدة مسابح
-* 🌐 موقع عام للعملاء + لوحة خاصة للإدارة
-
----
-
-## 👨‍💻 المطور
-
-تم تطويره كنظام حجوزات احترافي قابل للتوسع التجاري.
-
-```
-
----
-
-# 💥 ماذا فعلنا الآن؟
-
-✔ حولنا المشروع من متجر ذهب ❌  
-✔ إلى نظام حجوزات احترافي ✔  
-✔ متوافق مع Firebase ✔  
-✔ جاهز للنشر ✔  
-
----
-
-## 🔥 الخطوة التالية (أنصحك بها)
-
-هل تريد أضيف لك داخل المشروع:
-
-### 1️⃣ نظام واتساب تلقائي حقيقي (API وليس فقط رابط)  
-### 2️⃣ نظام دفع Stripe 💳  
-### 3️⃣ تعدد مسابح (تحول المشروع إلى منصة)
+لا تعتمد على إخفاء لوحة الإدارة في الواجهة كوسيلة حماية. صلاحيات Firestore هي طبقة الحماية الأساسية، بينما فحص البريد في الواجهة يحسن تجربة المستخدم ويمنع الدخول غير المصرح به إلى شاشة الإدارة.
