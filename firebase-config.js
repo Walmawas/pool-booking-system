@@ -33,3 +33,4 @@ export const defaultSettings = {
 window.__POOL_FIREBASE_CONFIG__ = firebaseConfig;
 void import("./infinite-calendar.js");
 void import("./admin-calendar-infinite.js");
+void import("./public-calendar-bridge.js");
