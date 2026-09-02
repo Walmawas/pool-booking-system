@@ -16,27 +16,28 @@
 
   function formatDate(key) {
     const date = parseDateKey(key);
-    return {
-      day: date.getDate(),
-      weekday: WEEKDAYS[date.getDay()],
-      month: MONTHS[date.getMonth()]
-    };
+    return { day: date.getDate(), weekday: WEEKDAYS[date.getDay()], month: MONTHS[date.getMonth()] };
   }
 
   function extractDate(card) {
     return card.querySelector("[data-public-slot]")?.dataset.date || "";
   }
 
+  function todayKey() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }
+
   function rebuildCard(card) {
     const dateKey = extractDate(card);
-    if (!dateKey) return;
+    if (!dateKey || card.dataset.redesigned === "1") return;
 
     const info = formatDate(dateKey);
     const originalSlots = [...card.querySelectorAll("[data-public-slot]")];
     const morning = originalSlots.find((slot) => slot.dataset.period === "morning");
     const evening = originalSlots.find((slot) => slot.dataset.period === "evening");
     const featured = card.classList.contains("featured-day");
-    const isToday = dateKey === new Date().toISOString().slice(0, 10);
+    const isToday = dateKey === todayKey();
 
     const slotHtml = (slot, period, label) => {
       if (!slot) return "";
@@ -50,10 +51,11 @@
     };
 
     card.className = `customer-day-card ${featured ? "featured-day" : ""} ${isToday ? "is-today" : ""}`.trim();
+    card.dataset.redesigned = "1";
     card.innerHTML = `
       <div class="redesigned-day-head">
         <div class="redesigned-day-name">
-          <strong>${escapeHtml(WEEKDAYS[parseDateKey(dateKey).getDay()])}</strong>
+          <strong>${escapeHtml(info.weekday)}</strong>
           <span>${escapeHtml(info.month)}</span>
         </div>
         <div class="redesigned-day-number" aria-label="اليوم ${info.day}">${info.day}</div>
@@ -65,10 +67,8 @@
       </div>`;
   }
 
-  function render() {
-    const grid = document.getElementById(GRID_ID);
-    if (!grid) return;
-    grid.querySelectorAll(".customer-day-card").forEach(rebuildCard);
+  function render(grid) {
+    grid.querySelectorAll(":scope > .customer-day-card").forEach((card) => rebuildCard(card));
   }
 
   function install() {
@@ -79,17 +79,11 @@
     }
     if (grid.dataset.redesignInstalled === "1") return;
     grid.dataset.redesignInstalled = "1";
-    const observer = new MutationObserver(() => {
-      if (grid.dataset.redesignBusy === "1") return;
-      grid.dataset.redesignBusy = "1";
-      window.requestAnimationFrame(() => {
-        render();
-        grid.dataset.redesignBusy = "0";
-      });
-    });
-    observer.observe(grid, { childList: true, subtree: true });
     injectStyles();
-    render();
+    render(grid);
+
+    const observer = new MutationObserver(() => render(grid));
+    observer.observe(grid, { childList: true });
   }
 
   function injectStyles() {
