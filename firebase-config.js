@@ -7,9 +7,9 @@ export const firebaseConfig = {
   appId: "1:750277189276:web:46123af8e441b593901759"
 };
 
-// Keep the client-side admin gate aligned with the Firebase account
-// and Firestore security rules. Authorization is still enforced server-side.
-export const ADMIN_EMAIL = "admin@example.com";
+// Must match the Firebase Authentication account and Firestore rules.
+// Firestore rules remain the authoritative authorization layer.
+export const ADMIN_EMAIL = "admin@pool.local";
 
 export const defaultSettings = {
   morningPrice: 100,
