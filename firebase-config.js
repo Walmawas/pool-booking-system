@@ -3,8 +3,8 @@ export const firebaseConfig = {
   authDomain: "pool-booking-system.firebaseapp.com",
   projectId: "pool-booking-system",
   storageBucket: "pool-booking-system.firebasestorage.app",
-  messagingSenderId: "750277189278",
-  appId: "1:750277189278:web:46123af8e441b593901759"
+  messagingSenderId: "750277189276",
+  appId: "1:750277189276:web:46123af8e441b593901759"
 };
 
 // Must match the Firebase Authentication account and Firestore rules.
