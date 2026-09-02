@@ -1,5 +1,5 @@
 export const firebaseConfig = {
-apiKey: "AIzaSyAsPMfhLr6R_SngsDpNkDSEQI9NI9XJhLE",
+  apiKey: "AIzaSyAsPMfhLr6R_SngsDpNkDSEQI9NI9XJhLE",
   authDomain: "pool-booking-system.firebaseapp.com",
   projectId: "pool-booking-system",
   storageBucket: "pool-booking-system.firebasestorage.app",
@@ -7,7 +7,9 @@ apiKey: "AIzaSyAsPMfhLr6R_SngsDpNkDSEQI9NI9XJhLE",
   appId: "1:750277189276:web:46123af8e441b593901759"
 };
 
-export const ADMIN_EMAIL = "admin@pool.local";
+// Keep the client-side admin gate aligned with the Firebase account
+// and Firestore security rules. Authorization is still enforced server-side.
+export const ADMIN_EMAIL = "admin@example.com";
 
 export const defaultSettings = {
   morningPrice: 100,
