@@ -1,283 +1,59 @@
+# نظام حجوزات مسبح الريحان - Pool Booking System
 
-# نظام حجوزات المسبح - Pool Booking System
+نظام حجز خفيف للمسبح مبني على واجهة HTML/CSS/JavaScript مع Firebase Authentication وFirestore. الواجهة عربية RTL، وتدعم التقويم، حجز الفترات، الأسعار، الإدارة، والتصدير.
 
-تطبيق React + Firebase لإدارة حجوزات المسبح مع تقويم تفاعلي وتحديثات فورية.
-
----
-
-## 🚀 التشغيل السريع
+## التشغيل
 
 ```bash
 npm install
-````
-
-أنشئ ملف `.env` من المثال:
-
-* **Windows:** `copy .env.example .env`
-* **macOS / Linux:** `cp .env.example .env`
-
-ثم املأ القيم من Firebase:
-
-```env
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
-
-VITE_ADMIN_EMAIL=admin@example.com
-```
-
-تشغيل المشروع:
-
-```bash
 npm run dev
 ```
 
----
-
-## 🔥 إعداد Firebase (مهم جدًا)
-
-1. ادخل إلى Firebase Console
-2. أنشئ مشروع جديد
-3. فعّل الخدمات التالية:
-
-### ✅ Firestore Database
-
-* Create Database
-* Start in test mode
-
-### ✅ Authentication
-
-* فعّل:
-
-  * Email / Password
-
----
-
-## 👤 حساب المشرف (Admin)
-
-* أنشئ مستخدم من:
-  Authentication → Users
-
-مثال:
-
-```
-Email: admin@example.com
-Password: 12345678
-```
-
-⚠️ مهم:
-يجب أن يتطابق مع:
-
-* `VITE_ADMIN_EMAIL` داخل `.env`
-* قواعد Firestore
-
----
-
-## 🔐 قواعد الأمان (Firestore Rules)
-
-استبدل القواعد بـ:
-
-```js
-rules_version = '2';
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    function isAdmin() {
-      return request.auth != null &&
-             request.auth.token.email == "admin@example.com";
-    }
-
-    match /bookings/{id} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-  }
-}
-```
-
-ثم نفّذ:
-
-```bash
-firebase deploy --only firestore:rules
-```
-
----
-
-## 📅 الميزات
-
-### 🗓️ التقويم
-
-* عرض شهري
-* كل يوم يحتوي:
-
-  * صباحي
-  * مسائي
-* منع الحجز المكرر
-* تلوين:
-
-  * متاح
-  * محجوز
-  * محدد
-
----
-
-### ➕ نظام الحجز
-
-* اسم العميل
-* رقم الهاتف
-* ملاحظات
-* اختيار الأيام والفترات
-* حساب السعر تلقائي
-
----
-
-### 💰 نظام الأسعار
-
-* صباحي
-* مسائي
-* كامل
-* قابل للتعديل
-
----
-
-### 📊 لوحة التحكم (Admin Dashboard)
-
-* عدد الحجوزات
-* إجمالي الإيرادات
-* عرض قائمة الحجوزات
-* تحديث فوري (Realtime)
-
----
-
-### 🔔 ميزات إضافية
-
-* Firebase Authentication
-* Realtime Firestore
-* إشعارات (اختياري)
-* زر واتساب للحجز
-* تصميم RTL عربي
-* Responsive (موبايل + كمبيوتر)
-
----
-
-## 🧠 هيكل قاعدة البيانات
-
-```json
-bookings: {
-  id: {
-    clientName: "string",
-    phone: "string",
-    dates: ["2026-5-10-صباحي"],
-    period: "صباحي",
-    price: 100,
-    notes: "string",
-    createdAt: timestamp
-  }
-}
-```
-
----
-
-## 🧪 التطوير
-
-```bash
-npm run dev
-```
-
----
-
-## 🏗️ البناء للإنتاج
+للبناء:
 
 ```bash
 npm run build
 ```
 
-الناتج سيكون داخل:
+## Firebase
 
-```
-dist/
-```
+الإعدادات الحالية موجودة في `firebase-config.js`، بينما `firebase.js` داخل `src/` جزء من نسخة React قديمة وغير مستخدمة في نسخة المسبح المنشورة.
 
----
+الخدمات المطلوبة:
 
-## 🌍 النشر
+- Firebase Authentication مع Email/Password.
+- Firestore Database.
+- نشر Hosting من جذر المشروع.
 
-يمكنك النشر على:
+حساب المدير المستخدم في التطبيق يجب أن يطابق `ADMIN_EMAIL`، وقواعد Firestore تحمي بيانات الحجوزات بحيث لا تكون بيانات العملاء متاحة للعامة.
 
-### 🚀 Vercel
+## بنية البيانات
 
-* Import من GitHub
-* Build: `npm run build`
-* Output: `dist`
-
----
-
-### 🔥 Firebase Hosting
-
-```bash
-firebase deploy
+```text
+bookings/{bookingId}
+bookingSlots/{YYYY-MM-DD_period}
+settings/pricing
 ```
 
----
+`bookingSlots` تحتوي على حالة الفترة وتاريخها، وتستخدم الواجهة العامة استعلامًا محددًا حسب التاريخ بدل تحميل المجموعة كاملة.
 
-## 📱 التكامل مع تطبيق الجوال
+## الأداء
 
-هذا المشروع مرتبط بـ:
+النسخة المحسّنة تتضمن:
 
-* تطبيق React Native (Expo)
-* نفس Firebase
+- تحميل فترات الحجز ضمن النطاق المعروض فقط.
+- تحديث realtime للنطاق المطلوب فقط وإعادة الاشتراك عند تغيّر الفترة الزمنية.
+- تحميل `html2canvas` عند طلب مشاركة التقويم فقط، وليس عند فتح الموقع.
+- تخزين مؤقت أفضل لملفات Firebase Hosting الثابتة.
+- تقليل تأثير المؤثرات الثقيلة على الأجهزة الضعيفة.
+- تحسين تجربة الموبايل وحالات التركيز والتنقل باللمس.
 
-👉 يعني:
-✔ نفس الحجوزات
-✔ نفس البيانات
-✔ تحديث فوري بين الموقع والتطبيق
+## الأمان
 
----
+قواعد `firestore.rules` الحالية تسمح للعامة بقراءة توافر الفترات والأسعار فقط، بينما القراءة والكتابة على بيانات الحجوزات تتطلب حساب المدير.
 
-## 💡 ملاحظات مهمة
+لا تضع كلمات مرور Firebase أو مفاتيح سرية للخدمات الخلفية داخل المستودع.
 
-* لا ترفع ملف `.env` إلى GitHub
-* تأكد من حماية Firestore قبل الإنتاج
-* استخدم أسعار حقيقية من لوحة التحكم لاحقًا
+## ملاحظات
 
----
-
-## 🔥 مستقبل المشروع
-
-يمكن تطويره ليشمل:
-
-* 💳 دفع إلكتروني
-* 📲 إشعارات واتساب تلقائية
-* 🏊‍♂️ إدارة عدة مسابح
-* 🌐 موقع عام للعملاء + لوحة خاصة للإدارة
-
----
-
-## 👨‍💻 المطور
-
-تم تطويره كنظام حجوزات احترافي قابل للتوسع التجاري.
-
-```
-
----
-
-# 💥 ماذا فعلنا الآن؟
-
-✔ حولنا المشروع من متجر ذهب ❌  
-✔ إلى نظام حجوزات احترافي ✔  
-✔ متوافق مع Firebase ✔  
-✔ جاهز للنشر ✔  
-
----
-
-## 🔥 الخطوة التالية (أنصحك بها)
-
-هل تريد أضيف لك داخل المشروع:
-
-### 1️⃣ نظام واتساب تلقائي حقيقي (API وليس فقط رابط)  
-### 2️⃣ نظام دفع Stripe 💳  
-### 3️⃣ تعدد مسابح (تحول المشروع إلى منصة)
+يوجد مجلد `src/` يحتوي على تطبيق React قديم ببيانات خاصة بمشروع آخر. لا يتم نشره بواسطة Firebase Hosting وفق إعدادات `firebase.json` الحالية، لذلك لا ينبغي الاعتماد عليه عند تطوير نسخة المسبح.

@@ -1,17 +1,14 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'admin@example.com';
+        && request.auth.token.email == 'admin@pool.local';
     }
 
-    match /products/{productId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    match /media/{mediaId} {
+    // Public availability and pricing are readable by customers.
+    match /bookingSlots/{slotId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
@@ -20,6 +17,22 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isAdmin();
       allow delete: if false;
+    }
+
+    // Booking records contain customer details and are admin-only.
+    match /bookings/{bookingId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // Legacy collections are kept protected for admin use only.
+    match /products/{productId} {
+      allow read: if false;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /media/{mediaId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
   }
 }

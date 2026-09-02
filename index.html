@@ -237,156 +237,100 @@
                 <button id="nextMonthBtn" class="icon-action" type="button" title="الشهر التالي">›</button>
               </div>
             </div>
-
             <div class="calendar-legend">
               <span><i class="legend-dot available"></i>متاح</span>
               <span><i class="legend-dot selected"></i>محدد</span>
               <span><i class="legend-dot booked"></i>محجوز</span>
             </div>
-
-            <div class="weekdays">
-              <span>السبت</span><span>الأحد</span><span>الإثنين</span><span>الثلاثاء</span>
-              <span>الأربعاء</span><span>الخميس</span><span>الجمعة</span>
-            </div>
-            <div id="calendarGrid" class="calendar-grid"></div>
+            <div id="calendarGrid" class="admin-calendar-grid"></div>
           </div>
 
-          <aside class="side-stack">
-            <form id="bookingForm" class="panel form-panel">
-              <div class="panel-header">
-                <div>
-                  <span class="eyebrow">حجز جديد</span>
-                  <h2 id="formTitle">تفاصيل الحجز</h2>
-                </div>
-                <button id="resetFormBtn" class="ghost-action compact" type="button">تفريغ</button>
+          <aside class="panel booking-form-panel">
+            <div class="panel-header">
+              <div>
+                <span class="eyebrow">الحجز</span>
+                <h2 id="formTitle">تفاصيل الحجز</h2>
               </div>
-
+            </div>
+            <form id="bookingForm" class="form-grid">
               <input id="editingBookingId" type="hidden" />
-              <div class="selected-summary">
-                <span>الفترات المختارة</span>
-                <strong id="selectedDaysCount">0</strong>
-              </div>
-
-              <label>
-                طريقة التسعير
-                <select id="periodSelect" required>
-                  <option value="auto">تلقائي حسب الفترات المحددة</option>
-                </select>
+              <label>اسم العميل<input id="clientNameInput" required /></label>
+              <label>رقم الهاتف<input id="phoneInput" inputmode="tel" required /></label>
+              <label>الفترة
+                <select id="periodSelect"><option value="auto">تلقائي</option><option value="morning">صباحي</option><option value="evening">مسائي</option><option value="full">كامل</option><option value="mixed">فترات متعددة</option></select>
               </label>
-
-              <div class="two-columns">
-                <label>اسم العميل <input id="clientNameInput" type="text" minlength="2" required /></label>
-                <label>رقم الهاتف <input id="phoneInput" type="tel" required /></label>
-              </div>
-
-              <div class="two-columns">
-                <label>السعر <input id="priceInput" type="number" min="0" step="0.01" readonly /></label>
-                <label>العربون <input id="depositInput" type="number" min="0" step="0.01" value="0" /></label>
-              </div>
-
-              <label>ملاحظات <textarea id="notesInput" rows="3" placeholder="ملاحظات اختيارية"></textarea></label>
-
+              <label>السعر<input id="priceInput" type="number" min="0" step="0.01" required /></label>
+              <label>العربون<input id="depositInput" type="number" min="0" step="0.01" value="0" /></label>
+              <label>ملاحظات<textarea id="notesInput" rows="4"></textarea></label>
+              <div class="selection-summary"><span>الأيام المختارة</span><strong id="selectedDaysCount">0</strong></div>
               <div class="form-actions">
                 <button class="primary-action" type="submit">حفظ الحجز</button>
+                <button id="resetFormBtn" class="secondary-action" type="button">تفريغ</button>
                 <button id="cancelEditBtn" class="ghost-action is-hidden" type="button">إلغاء التعديل</button>
               </div>
             </form>
-
-            <section class="panel settings-panel">
-              <div class="panel-header">
-                <div>
-                  <span class="eyebrow">الأسعار والأيام المميزة</span>
-                  <h2>إعدادات التسعير</h2>
-                </div>
-              </div>
-
-              <form id="settingsForm" class="form-grid">
-                <h3 class="settings-subtitle">الأيام العادية</h3>
-                <div class="two-columns">
-                  <label>صباحي <input id="morningPriceInput" type="number" min="0" step="0.01" required /></label>
-                  <label>مسائي <input id="eveningPriceInput" type="number" min="0" step="0.01" required /></label>
-                </div>
-                <label>كامل عادي <input id="fullPriceInput" type="number" min="0" step="0.01" required /></label>
-
-                <h3 class="settings-subtitle">الأيام المميزة</h3>
-                <div class="two-columns">
-                  <label>صباحي مميز <input id="featuredMorningPriceInput" type="number" min="0" step="0.01" required /></label>
-                  <label>مسائي مميز <input id="featuredEveningPriceInput" type="number" min="0" step="0.01" required /></label>
-                </div>
-                <label>كامل مميز <input id="featuredFullPriceInput" type="number" min="0" step="0.01" required /></label>
-
-                <label>
-                  العملة
-                  <select id="currencySelect">
-                    <option value="USD">USD</option>
-                  </select>
-                </label>
-
-                <fieldset class="weekday-fieldset">
-                  <legend>أيام أسبوعية مميزة</legend>
-                  <label><input type="checkbox" name="featuredWeekday" value="4" /> الخميس</label>
-                  <label><input type="checkbox" name="featuredWeekday" value="5" /> الجمعة</label>
-                  <label><input type="checkbox" name="featuredWeekday" value="6" /> السبت</label>
-                  <label><input type="checkbox" name="featuredWeekday" value="0" /> الأحد</label>
-                  <label><input type="checkbox" name="featuredWeekday" value="1" /> الإثنين</label>
-                  <label><input type="checkbox" name="featuredWeekday" value="2" /> الثلاثاء</label>
-                  <label><input type="checkbox" name="featuredWeekday" value="3" /> الأربعاء</label>
-                </fieldset>
-
-                <div class="custom-date-row">
-                  <label>تاريخ مميز مخصص <input id="featuredDateInput" type="date" /></label>
-                  <button id="addFeaturedDateBtn" class="ghost-action compact" type="button">إضافة</button>
-                </div>
-                <div id="featuredDatesList" class="date-chip-list"></div>
-
-                <button class="secondary-action" type="submit">حفظ الإعدادات</button>
-              </form>
-            </section>
           </aside>
         </section>
 
-        <section class="panel bookings-panel">
+        <section class="panel settings-panel">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">الإعدادات</span>
+              <h2>الأسعار والأيام المميزة</h2>
+            </div>
+          </div>
+          <form id="settingsForm" class="form-grid settings-grid">
+            <label>صباحي<input id="morningPriceInput" type="number" min="0" step="0.01" /></label>
+            <label>مسائي<input id="eveningPriceInput" type="number" min="0" step="0.01" /></label>
+            <label>كامل<input id="fullPriceInput" type="number" min="0" step="0.01" /></label>
+            <label>صباحي مميز<input id="featuredMorningPriceInput" type="number" min="0" step="0.01" /></label>
+            <label>مسائي مميز<input id="featuredEveningPriceInput" type="number" min="0" step="0.01" /></label>
+            <label>كامل مميز<input id="featuredFullPriceInput" type="number" min="0" step="0.01" /></label>
+            <label>العملة<select id="currencySelect"><option value="USD">USD</option></select></label>
+            <div class="weekday-selector">
+              <span>الأيام المميزة الأسبوعية</span>
+              <label><input type="checkbox" name="featuredWeekday" value="0" />الأحد</label>
+              <label><input type="checkbox" name="featuredWeekday" value="1" />الإثنين</label>
+              <label><input type="checkbox" name="featuredWeekday" value="2" />الثلاثاء</label>
+              <label><input type="checkbox" name="featuredWeekday" value="3" />الأربعاء</label>
+              <label><input type="checkbox" name="featuredWeekday" value="4" />الخميس</label>
+              <label><input type="checkbox" name="featuredWeekday" value="5" />الجمعة</label>
+              <label><input type="checkbox" name="featuredWeekday" value="6" />السبت</label>
+            </div>
+            <label>إضافة تاريخ مميز<input id="featuredDateInput" type="date" /></label>
+            <button id="addFeaturedDateBtn" class="secondary-action" type="button">إضافة التاريخ</button>
+            <div id="featuredDatesList" class="featured-dates-list"></div>
+            <button class="primary-action" type="submit">حفظ الإعدادات</button>
+          </form>
+        </section>
+
+        <section class="panel reports-panel">
           <div class="panel-header">
             <div>
               <span class="eyebrow">الحجوزات</span>
               <h2>قائمة الحجوزات</h2>
             </div>
             <div class="report-actions">
-              <button id="exportWeeklyBtn" class="ghost-action compact" type="button">تصدير التقرير الأسبوعي</button>
-              <button id="shareCalendarBtn" class="secondary-action compact" type="button">مشاركة التقويم كصورة</button>
+              <button id="exportWeeklyBtn" class="secondary-action" type="button">تصدير التقرير الأسبوعي</button>
+              <button id="shareCalendarBtn" class="ghost-action" type="button">مشاركة صورة التقويم</button>
             </div>
           </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>العميل</th><th>الهاتف</th><th>التواريخ</th><th>النوع</th>
-                  <th>السعر</th><th>العربون</th><th>إجراءات</th>
-                </tr>
-              </thead>
-              <tbody id="bookingsTable"></tbody>
-            </table>
-          </div>
+          <div class="table-wrap"><table><thead><tr><th>العميل</th><th>الهاتف</th><th>التواريخ</th><th>الفترة</th><th>السعر</th><th>العربون</th><th>الإجراءات</th></tr></thead><tbody id="bookingsTable"></tbody></table></div>
         </section>
       </section>
     </main>
 
-    <div id="slotModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true">
-      <article class="slot-modal">
+    <div id="slotModal" class="modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="slotModalTitle">
+      <div class="modal-card">
         <button id="closeSlotModalBtn" class="modal-close" type="button" aria-label="إغلاق">×</button>
-        <span id="slotModalStatus" class="status-pill">متاح</span>
-        <h2 id="slotModalTitle">تفاصيل اليوم</h2>
-        <p id="slotModalMeta"></p>
-        <strong id="slotModalPrice"></strong>
-        <div class="modal-actions">
-          <a class="primary-action link-button" href="https://wa.me/963980195144" target="_blank" rel="noopener">واتس اب</a>
-          <a class="secondary-action link-button" href="tel:+963980195144">اتصال</a>
-        </div>
-      </article>
+        <span id="slotModalStatus" class="slot-status">متاح</span>
+        <h2 id="slotModalTitle">-</h2>
+        <p id="slotModalMeta">-</p>
+        <strong id="slotModalPrice">-</strong>
+      </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script type="module" src="main.js"></script>
+    <script type="module" src="./main.js"></script>
+    <script type="module" src="./calendar-ui.js"></script>
   </body>
 </html>
