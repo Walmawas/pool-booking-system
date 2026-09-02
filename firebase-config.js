@@ -29,7 +29,7 @@ export const defaultSettings = {
   currency: "USD"
 };
 
-// The infinite calendar is isolated in its own module so the main booking
-// application remains responsible for authentication, bookings and pricing.
+// Keep the calendar presentation isolated from the core booking application.
 window.__POOL_FIREBASE_CONFIG__ = firebaseConfig;
 void import("./infinite-calendar.js");
+void import("./admin-calendar-infinite.js");
