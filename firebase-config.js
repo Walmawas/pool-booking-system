@@ -29,9 +29,6 @@ export const defaultSettings = {
   currency: "USD"
 };
 
-// Keep the calendar presentation isolated from the core booking application.
-window.__POOL_FIREBASE_CONFIG__ = firebaseConfig;
-void import("./infinite-calendar.js");
-void import("./admin-calendar-infinite.js");
-void import("./public-calendar-bridge.js");
-void import("./calendar-width.js");
+// The application now has one authoritative calendar implementation in main.js.
+// Do not dynamically import the old standalone calendar scripts here: doing so
+// created duplicate Firebase apps/listeners and competing DOM renderers.
