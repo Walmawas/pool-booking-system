@@ -1,86 +1,68 @@
-# نظام مجوهرات جود - Joud Jewelry
+# نظام حجز مسبح الريحان - Pool Booking System
 
-تطبيق React + Firebase لعرض وإدارة منتجات المجوهرات مع أسعار الذهب وتحديثات لحظية.
+تطبيق ويب خفيف لحجز فترات مسبح الريحان، مبني على JavaScript + Firebase مع واجهة عربية RTL، رزنامة عامة، لوحة إدارة، إدارة الأسعار، ومنع تعارض الحجوزات.
 
----
-
-## 🚀 التشغيل السريع
+## التشغيل
 
 ```bash
 npm install
-```
-
-أنشئ ملف `.env` من المثال:
-
-* **Windows:** `copy .env.example .env`
-* **macOS / Linux:** `cp .env.example .env`
-
-ثم املأ قيم Firebase من إعدادات المشروع.
-
-تشغيل المشروع:
-
-```bash
 npm run dev
 ```
 
-## 🔥 إعداد Firebase
+المشروع يستخدم `index.html` كواجهة الاستضافة و`main.js` كتطبيق المتصفح الرئيسي.
 
-فعّل في Firebase:
+## Firebase
+
+فعّل:
 
 - Firestore Database
 - Authentication → Email / Password
+- Firebase Hosting عند النشر عبر Firebase
 
 لا تستخدم Test Mode في الإنتاج.
 
-## 👤 حساب المشرف
+## حساب المدير
 
-أنشئ حساب المشرف من Firebase Authentication → Users.
+أنشئ حساب المدير من Firebase Authentication → Users.
 
-يجب أن تكون قيمة `VITE_ADMIN_EMAIL` مطابقة لبريد الحساب المسموح به في `firestore.rules`. كلمة المرور لا تُخزّن في التطبيق أو في ملفات الإعدادات المرفوعة إلى Git.
+يجب أن يتطابق `VITE_ADMIN_EMAIL` في بيئة التطوير مع البريد المستخدم في `firestore.rules`. كلمة المرور لا تُحفظ في Git ولا داخل ملفات المشروع.
 
-القيمة المستخدمة حالياً في القواعد:
+## الأمان
 
-```text
-admin@pool.local
-```
-
-## 🔐 قواعد الأمان
-
-Firestore Rules هي طبقة الحماية الأساسية. فحص البريد في الواجهة مخصص لتحسين تجربة المستخدم وليس بديلاً عن قواعد Firestore.
-
-لتطبيق القواعد:
+قواعد Firestore هي طبقة التفويض الأساسية. فحص البريد في الواجهة ليس بديلاً عن القواعد.
 
 ```bash
 firebase deploy --only firestore:rules
 ```
 
-بيانات الحجوزات خاصة بالمشرف، بينما بيانات التوفر العامة يجب أن تعرض الحد الأدنى المطلوب للواجهة العامة.
+بيانات `bookings` خاصة بالمدير، بينما `bookingSlots` تعرض فقط حالة التوفر اللازمة للواجهة العامة.
 
-## 📦 بنية البيانات الحالية
+## بنية البيانات
 
 ```text
-products/{productId}
-media/{mediaId}
-settings/{docId}
+settings/pricing
 bookings/{bookingId}
-bookingSlots/{date-period}
+bookingSlots/{date_period}
 ```
 
-## 🧩 Codex Plugin
+## ملاحظة مهمة حول النسخة السابقة
 
-يحتوي المشروع أيضاً على Plugin خاص بـ Codex ضمن:
+كان المشروع يحتوي على أكثر من تطبيق تقويم مستقل يتم تحميله من `firebase-config.js`. هذا كان يسبب عدة Firebase listeners ومنافسة على نفس عناصر DOM. تم توحيد التشغيل بحيث يكون `main.js` هو التطبيق الوحيد المسؤول عن التقويم والحجوزات، وإزالة ملفات التقويم القديمة غير المستخدمة.
+
+## Codex Plugin
+
+يحتوي المشروع على Plugin خاص بـ Codex ضمن:
 
 ```text
 .agents/plugins/marketplace.json
 .agents/plugins/plugins/pool-booking/
 ```
 
-وهو مخصص لمراجعة وتطوير المشروع، خصوصاً الأمن، Firebase، الأداء، الواجهات، والاختبارات.
+## قواعد التطوير
 
-## 📋 ملاحظات التطوير
-
-- حافظ على RTL العربية.
+- حافظ على RTL والعربية.
 - لا تضع كلمات مرور أو tokens في Git.
 - لا تضعف Firestore Rules لحل مشكلة في الواجهة.
-- افحص تأثير أي تعديل على Firebase reads/listeners قبل دمجه.
-- شغّل `npm run build` بعد التعديلات البرمجية المهمة.
+- لا تضف Firebase listeners مكررة لنفس البيانات.
+- اختبر منع تعارض الحجز عند الإنشاء والتعديل.
+- شغّل `npm run build` بعد أي تعديل برمجي مهم إذا كان إعداد Vite مستخدماً في بيئة البناء.
