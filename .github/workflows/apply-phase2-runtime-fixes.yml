@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   patch-runtime:
-    if: "!contains(github.event.head_commit.message, '[apply-runtime-fixes]')"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
@@ -28,13 +27,15 @@ jobs:
           path = Path('main.js')
           text = path.read_text(encoding='utf-8')
 
-          state_pattern = re.compile(r'(unsubscribePublicSlots:\s*null\n)(\s*};)', re.S)
-          text, count = state_pattern.subn(r'\1  publicRangeKey: null\n\2', text, count=1)
-          if count != 1:
-              raise SystemExit('state marker not found')
+          if 'publicRangeKey: null' not in text:
+              state_pattern = re.compile(r'(unsubscribePublicSlots:\s*null\n)(\s*};)', re.S)
+              text, count = state_pattern.subn(r'\1  publicRangeKey: null\n\2', text, count=1)
+              if count != 1:
+                  raise SystemExit('state marker not found')
 
-          public_pattern = re.compile(r'function subscribePublicSlots\(\) \{.*?\n\}', re.S)
-          new_public = '''function subscribePublicSlots() {
+          if 'where("date", ">=", startKey)' not in text:
+              public_pattern = re.compile(r'function subscribePublicSlots\(\) \{.*?\n\}', re.S)
+              new_public = '''function subscribePublicSlots() {
   const { days } = getPublicCalendarDays();
   if (!days.length) return;
 
@@ -67,12 +68,13 @@ jobs:
     }
   );
 }'''
-          text, count = public_pattern.subn(lambda _: new_public, text, count=1)
-          if count != 1:
-              raise SystemExit('subscribePublicSlots marker not found')
+              text, count = public_pattern.subn(lambda _: new_public, text, count=1)
+              if count != 1:
+                  raise SystemExit('subscribePublicSlots marker not found')
 
-          summary_pattern = re.compile(r'function summarizeSelectedSlots\(slotKeys\) \{.*?\n\}', re.S)
-          new_summary = '''function summarizeSelectedSlots(slotKeys) {
+          if 'const byDate = new Map()' not in text:
+              summary_pattern = re.compile(r'function summarizeSelectedSlots\(slotKeys\) \{.*?\n\}', re.S)
+              new_summary = '''function summarizeSelectedSlots(slotKeys) {
   const sorted = [...slotKeys].sort(compareSlotKeys);
   const byDate = new Map();
 
@@ -111,30 +113,32 @@ jobs:
     slotKeys: sorted
   };
 }'''
-          text, count = summary_pattern.subn(lambda _: new_summary, text, count=1)
-          if count != 1:
-              raise SystemExit('summarizeSelectedSlots marker not found')
+              text, count = summary_pattern.subn(lambda _: new_summary, text, count=1)
+              if count != 1:
+                  raise SystemExit('summarizeSelectedSlots marker not found')
 
-          render_pattern = re.compile(
-              r'function renderPublicCalendar\(\) \{\n(\s*)if \(!els\.publicCalendarGrid\) return;\n(\s*)const \{ title, days \} = getPublicCalendarDays\(\);'
-          )
-          def render_replacement(match):
-              indent = match.group(1)
-              return (
-                  'function renderPublicCalendar() {\n'
-                  f'{indent}if (!els.publicCalendarGrid) return;\n'
-                  f'{indent}subscribePublicSlots();\n'
-                  f'{match.group(2)}const {{ title, days }} = getPublicCalendarDays();'
+          if 'subscribePublicSlots();\n  const { title, days } = getPublicCalendarDays();' not in text:
+              render_pattern = re.compile(
+                  r'function renderPublicCalendar\(\) \{\n(\s*)if \(!els\.publicCalendarGrid\) return;\n(\s*)const \{ title, days \} = getPublicCalendarDays\(\);'
               )
-          text, count = render_pattern.subn(render_replacement, text, count=1)
-          if count != 1:
-              raise SystemExit('renderPublicCalendar marker not found')
+              def render_replacement(match):
+                  indent = match.group(1)
+                  return (
+                      'function renderPublicCalendar() {\n'
+                      f'{indent}if (!els.publicCalendarGrid) return;\n'
+                      f'{indent}subscribePublicSlots();\n'
+                      f'{match.group(2)}const {{ title, days }} = getPublicCalendarDays();'
+                  )
+              text, count = render_pattern.subn(render_replacement, text, count=1)
+              if count != 1:
+                  raise SystemExit('renderPublicCalendar marker not found')
 
-          init_marker = '''initializePublicControls();
+          if 'window.addEventListener("unhandledrejection"' not in text:
+              marker = '''initializePublicControls();
 bindEvents();
 subscribeSettings();
 subscribePublicSlots();'''
-          init_replacement = '''initializePublicControls();
+              replacement = '''initializePublicControls();
 bindEvents();
 subscribeSettings();
 subscribePublicSlots();
@@ -145,9 +149,9 @@ window.addEventListener("error", (event) => {
 window.addEventListener("unhandledrejection", (event) => {
   console.error("Unhandled promise rejection:", event.reason);
 });'''
-          if init_marker not in text:
-              raise SystemExit('initialization marker not found')
-          text = text.replace(init_marker, init_replacement, 1)
+              if marker not in text:
+                  raise SystemExit('initialization marker not found')
+              text = text.replace(marker, replacement, 1)
 
           path.write_text(text, encoding='utf-8')
 
@@ -174,6 +178,10 @@ window.addEventListener("unhandledrejection", (event) => {
 
       - name: Commit runtime fixes
         run: |
+          if git diff --quiet -- main.js; then
+            echo "Runtime fixes are already present."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add main.js
