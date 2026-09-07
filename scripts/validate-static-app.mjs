@@ -39,14 +39,11 @@ assert(firebase.includes('"source": "main.js"'), "main.js should have an explici
 assert(firebase.includes('"source": "style.css"'), "style.css should have an explicit cache policy");
 assert(firebase.includes('"source": "assets/**"'), "assets should have an explicit cache policy");
 
-const forbiddenSecrets = [
-  /AIza[0-9A-Za-z_-]{20,}/,
-  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/
-];
-for (const pattern of forbiddenSecrets) {
-  for (const [name, content] of Object.entries({ index, main, config, rules, firebase })) {
-    assert(!pattern.test(content), `${name} contains a possible secret or private key`);
-  }
+// Firebase Web API keys are intentionally client-visible identifiers, so do not
+// flag them as private secrets. Private-key material is never valid in this app.
+const privateKeyPattern = /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/;
+for (const [name, content] of Object.entries({ index, main, config, rules, firebase })) {
+  assert(!privateKeyPattern.test(content), `${name} contains private-key material`);
 }
 
 if (failures.length) {
