@@ -28,32 +28,131 @@ jobs:
           path = Path('main.js')
           text = path.read_text(encoding='utf-8')
 
-          old_state = '''  unsubscribeBookings: null,\n  unsubscribeSettings: null,\n  unsubscribePublicSlots: null\n};'''
-          new_state = '''  unsubscribeBookings: null,\n  unsubscribeSettings: null,\n  unsubscribePublicSlots: null,\n  publicRangeKey: null\n};'''
-          if old_state not in text:
+          text, count = re.subn(
+              r'(unsubscribePublicSlots: null\n)(};)',
+              r'\1  publicRangeKey: null\n\2',
+              text,
+              count=1,
+          )
+          if count != 1:
               raise SystemExit('state marker not found')
-          text = text.replace(old_state, new_state, 1)
 
-          public_slots = '''function subscribePublicSlots() {\n  state.unsubscribePublicSlots?.();\n  state.unsubscribePublicSlots = onSnapshot(\n    collection(db, "bookingSlots"),\n    (snapshot) => {\n      state.publicSlots = new Map(\n        snapshot.docs.map((slotDoc) => [slotDoc.id, { id: slotDoc.id, ...slotDoc.data() }])\n      );\n      renderPublicCalendar();\n    },\n    () => {\n      state.publicSlots = new Map();\n      renderPublicCalendar();\n    }\n  );\n}\n'''
-          new_public_slots = '''function subscribePublicSlots() {\n  const { days } = getPublicCalendarDays();\n  if (!days.length) return;\n\n  const startKey = toDateKey(days[0]);\n  const endKey = toDateKey(days[days.length - 1]);\n  const rangeKey = `${startKey}|${endKey}`;\n\n  if (state.publicRangeKey === rangeKey && state.unsubscribePublicSlots) return;\n\n  state.unsubscribePublicSlots?.();\n  state.publicRangeKey = rangeKey;\n\n  const slotsQuery = query(\n    collection(db, "bookingSlots"),\n    where("date", ">=", startKey),\n    where("date", "<=", endKey)\n  );\n\n  state.unsubscribePublicSlots = onSnapshot(\n    slotsQuery,\n    (snapshot) => {\n      state.publicSlots = new Map(\n        snapshot.docs.map((slotDoc) => [slotDoc.id, { id: slotDoc.id, ...slotDoc.data() }])\n      );\n      renderPublicCalendar();\n    },\n    () => {\n      state.publicSlots = new Map();\n      renderPublicCalendar();\n    }\n  );\n}\n'''
-          if old_public_slots not in text:
+          public_pattern = re.compile(
+              r'function subscribePublicSlots\(\) \{.*?\n\}\n',
+              re.S,
+          )
+          new_public = '''function subscribePublicSlots() {
+            const { days } = getPublicCalendarDays();
+            if (!days.length) return;
+
+            const startKey = toDateKey(days[0]);
+            const endKey = toDateKey(days[days.length - 1]);
+            const rangeKey = `${startKey}|${endKey}`;
+
+            if (state.publicRangeKey === rangeKey && state.unsubscribePublicSlots) return;
+
+            state.unsubscribePublicSlots?.();
+            state.publicRangeKey = rangeKey;
+
+            const slotsQuery = query(
+              collection(db, "bookingSlots"),
+              where("date", ">=", startKey),
+              where("date", "<=", endKey)
+            );
+
+            state.unsubscribePublicSlots = onSnapshot(
+              slotsQuery,
+              (snapshot) => {
+                state.publicSlots = new Map(
+                  snapshot.docs.map((slotDoc) => [slotDoc.id, { id: slotDoc.id, ...slotDoc.data() }])
+                );
+                renderPublicCalendar();
+              },
+              () => {
+                state.publicSlots = new Map();
+                renderPublicCalendar();
+              }
+            );
+          }
+          '''
+          text, count = public_pattern.subn(new_public, text, count=1)
+          if count != 1:
               raise SystemExit('subscribePublicSlots marker not found')
-          text = text.replace(old_public_slots, new_public_slots, 1)
 
-          old_summary = '''function summarizeSelectedSlots(slotKeys) {\n  const sorted = [...slotKeys].sort(compareSlotKeys);\n  let price = 0;\n  let fullBlocks = 0;\n  let remainderCount = 0;\n\n  for (let index = 0; index < sorted.length; index += 2) {\n    const pair = sorted.slice(index, index + 2);\n    if (pair.length === 2) {\n      const dateKey = splitSlotKey(pair[0])[0];\n      price += getDayPrices(dateKey).full;\n      fullBlocks += 1;\n    } else {\n      const [dateKey, period] = splitSlotKey(pair[0]);\n      price += getDayPrices(dateKey)[period];\n      remainderCount += 1;\n    }\n  }\n\n  return {\n    slotCount: sorted.length,\n    fullBlocks,\n    remainderCount,\n    price: Number(price.toFixed(2)),\n    slotKeys: sorted\n  };\n}\n'''
-          new_summary = '''function summarizeSelectedSlots(slotKeys) {\n  const sorted = [...slotKeys].sort(compareSlotKeys);\n  const byDate = new Map();\n\n  sorted.forEach((slotKey) => {\n    const [dateKey, period] = splitSlotKey(slotKey);\n    if (!byDate.has(dateKey)) byDate.set(dateKey, new Set());\n    byDate.get(dateKey).add(period);\n  });\n\n  let price = 0;\n  let fullBlocks = 0;\n  let remainderCount = 0;\n\n  for (const [dateKey, periods] of byDate) {\n    const prices = getDayPrices(dateKey);\n    const hasMorning = periods.has("morning");\n    const hasEvening = periods.has("evening");\n\n    if (hasMorning && hasEvening) {\n      price += prices.full;\n      fullBlocks += 1;\n    } else if (hasMorning) {\n      price += prices.morning;\n      remainderCount += 1;\n    } else if (hasEvening) {\n      price += prices.evening;\n      remainderCount += 1;\n    }\n  }\n\n  return {\n    slotCount: sorted.length,\n    fullBlocks,\n    remainderCount,\n    price: Number(price.toFixed(2)),\n    slotKeys: sorted\n  };\n}\n'''
-          if old_summary not in text:
+          summary_pattern = re.compile(
+              r'function summarizeSelectedSlots\(slotKeys\) \{.*?\n\}\n',
+              re.S,
+          )
+          new_summary = '''function summarizeSelectedSlots(slotKeys) {
+            const sorted = [...slotKeys].sort(compareSlotKeys);
+            const byDate = new Map();
+
+            sorted.forEach((slotKey) => {
+              const [dateKey, period] = splitSlotKey(slotKey);
+              if (!byDate.has(dateKey)) byDate.set(dateKey, new Set());
+              byDate.get(dateKey).add(period);
+            });
+
+            let price = 0;
+            let fullBlocks = 0;
+            let remainderCount = 0;
+
+            for (const [dateKey, periods] of byDate) {
+              const prices = getDayPrices(dateKey);
+              const hasMorning = periods.has("morning");
+              const hasEvening = periods.has("evening");
+
+              if (hasMorning && hasEvening) {
+                price += prices.full;
+                fullBlocks += 1;
+              } else if (hasMorning) {
+                price += prices.morning;
+                remainderCount += 1;
+              } else if (hasEvening) {
+                price += prices.evening;
+                remainderCount += 1;
+              }
+            }
+
+            return {
+              slotCount: sorted.length,
+              fullBlocks,
+              remainderCount,
+              price: Number(price.toFixed(2)),
+              slotKeys: sorted
+            };
+          }
+          '''
+          text, count = summary_pattern.subn(new_summary, text, count=1)
+          if count != 1:
               raise SystemExit('summarizeSelectedSlots marker not found')
-          text = text.replace(old_summary, new_summary, 1)
 
-          old_render = '''function renderPublicCalendar() {\n  if (!els.publicCalendarGrid) return;\n  const { title, days } = getPublicCalendarDays();'''
-          new_render = '''function renderPublicCalendar() {\n  if (!els.publicCalendarGrid) return;\n  subscribePublicSlots();\n  const { title, days } = getPublicCalendarDays();'''
+          old_render = '''function renderPublicCalendar() {
+            if (!els.publicCalendarGrid) return;
+            const { title, days } = getPublicCalendarDays();'''
+          new_render = '''function renderPublicCalendar() {
+            if (!els.publicCalendarGrid) return;
+            subscribePublicSlots();
+            const { title, days } = getPublicCalendarDays();'''
           if old_render not in text:
               raise SystemExit('renderPublicCalendar marker not found')
           text = text.replace(old_render, new_render, 1)
 
-          marker = '''initializePublicControls();\nbindEvents();\nsubscribeSettings();\nsubscribePublicSlots();'''
-          replacement = '''initializePublicControls();\nbindEvents();\nsubscribeSettings();\nsubscribePublicSlots();\n\nwindow.addEventListener("error", (event) => {\n  console.error("Unhandled application error:", event.error || event.message);\n});\nwindow.addEventListener("unhandledrejection", (event) => {\n  console.error("Unhandled promise rejection:", event.reason);\n});'''
+          marker = '''initializePublicControls();
+bindEvents();
+subscribeSettings();
+subscribePublicSlots();'''
+          replacement = '''initializePublicControls();
+bindEvents();
+subscribeSettings();
+subscribePublicSlots();
+
+window.addEventListener("error", (event) => {
+  console.error("Unhandled application error:", event.error || event.message);
+});
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("Unhandled promise rejection:", event.reason);
+});'''
           if marker not in text:
               raise SystemExit('initialization marker not found')
           text = text.replace(marker, replacement, 1)
