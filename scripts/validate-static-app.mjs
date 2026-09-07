@@ -24,7 +24,10 @@ const config = read("firebase-config.js");
 const rules = read("firestore.rules");
 const firebase = read("firebase.json");
 
-assert(index.includes('type="module"') && index.includes('src="./main.js"'), "index.html must load main.js as a module");
+assert(
+  index.includes('type="module"') && /<script[^>]+type="module"[^>]+src=["'](?:\.\/)?main\.js["']/.test(index),
+  "index.html must load main.js as a module"
+);
 assert(main.includes('collection(db, "bookingSlots")'), "main.js must reference bookingSlots");
 assert(main.includes('collection(db, "bookings")'), "main.js must reference bookings");
 assert(main.includes("runTransaction"), "booking writes must use a Firestore transaction");
