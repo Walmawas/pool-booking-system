@@ -1,7 +1,6 @@
+# نظام مجوهرات جود - Joud Jewelry
 
-# نظام حجوزات المسبح - Pool Booking System
-
-تطبيق React + Firebase لإدارة حجوزات المسبح مع تقويم تفاعلي وتحديثات فورية.
+تطبيق React + Firebase لعرض وإدارة منتجات المجوهرات مع أسعار الذهب وتحديثات لحظية.
 
 ---
 
@@ -9,25 +8,14 @@
 
 ```bash
 npm install
-````
+```
 
 أنشئ ملف `.env` من المثال:
 
 * **Windows:** `copy .env.example .env`
 * **macOS / Linux:** `cp .env.example .env`
 
-ثم املأ القيم من Firebase:
-
-```env
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
-
-VITE_ADMIN_EMAIL=admin@example.com
-```
+ثم املأ قيم Firebase من إعدادات المشروع.
 
 تشغيل المشروع:
 
@@ -35,47 +23,30 @@ VITE_ADMIN_EMAIL=admin@example.com
 npm run dev
 ```
 
----
+## 🔥 إعداد Firebase
 
-## 🔥 إعداد Firebase (مهم جدًا)
+فعّل في Firebase:
 
-1. ادخل إلى Firebase Console
-2. أنشئ مشروع جديد
-3. فعّل الخدمات التالية:
+- Firestore Database
+- Authentication → Email / Password
 
-### ✅ Firestore Database
+لا تستخدم Test Mode في الإنتاج.
 
-* Create Database
-* لا تستخدم Test Mode في الإنتاج.
+## 👤 حساب المشرف
 
-### ✅ Authentication
+أنشئ حساب المشرف من Firebase Authentication → Users.
 
-* فعّل:
-  * Email / Password
+يجب أن تكون قيمة `VITE_ADMIN_EMAIL` مطابقة لبريد الحساب المسموح به في `firestore.rules`. كلمة المرور لا تُخزّن في التطبيق أو في ملفات الإعدادات المرفوعة إلى Git.
 
----
-
-## 👤 حساب المشرف (Admin)
-
-أنشئ المستخدم من:
-
-`Authentication → Users`
-
-الحساب الإداري المستخدم في التطبيق والقواعد هو:
+القيمة المستخدمة حالياً في القواعد:
 
 ```text
-admin@example.com
+admin@pool.local
 ```
 
-يجب أن يتطابق البريد مع قيمة `VITE_ADMIN_EMAIL` وقواعد Firestore.
+## 🔐 قواعد الأمان
 
-> كلمة المرور لا تُخزن في التطبيق أو Firestore؛ تتم مصادقة المستخدم بواسطة Firebase Authentication.
-
----
-
-## 🔐 قواعد الأمان (Firestore Rules)
-
-القواعد الحالية تمنع الوصول العام إلى بيانات الحجوزات، وتسمح بالوصول العام فقط إلى البيانات اللازمة للواجهة العامة مثل حالة الفترات والإعدادات العامة. عمليات إنشاء/تعديل/حذف بيانات الإدارة تتطلب الحساب الإداري.
+Firestore Rules هي طبقة الحماية الأساسية. فحص البريد في الواجهة مخصص لتحسين تجربة المستخدم وليس بديلاً عن قواعد Firestore.
 
 لتطبيق القواعد:
 
@@ -83,86 +54,33 @@ admin@example.com
 firebase deploy --only firestore:rules
 ```
 
----
+بيانات الحجوزات خاصة بالمشرف، بينما بيانات التوفر العامة يجب أن تعرض الحد الأدنى المطلوب للواجهة العامة.
 
-## 📅 الميزات
-
-### 🗓️ التقويم
-
-* عرض شهري
-* كل يوم يحتوي:
-  * صباحي
-  * مسائي
-* منع الحجز المكرر عبر Transaction
-* تلوين:
-  * متاح
-  * محجوز
-  * محدد
-
-### ➕ نظام الحجز
-
-* اسم العميل
-* رقم الهاتف
-* ملاحظات
-* اختيار الأيام والفترات
-* حساب السعر تلقائي
-
-### 💰 نظام الأسعار
-
-* صباحي
-* مسائي
-* كامل
-* أسعار خاصة للأيام المميزة
-* قابل للتعديل من لوحة الإدارة
-
-### 📊 لوحة التحكم (Admin Dashboard)
-
-* عدد الحجوزات
-* إجمالي الإيرادات
-* عرض قائمة الحجوزات
-* تحديث فوري (Realtime)
-
-### 🔔 ميزات إضافية
-
-* Firebase Authentication
-* Realtime Firestore
-* زر واتساب للحجز
-* تصميم RTL عربي
-* Responsive (موبايل + كمبيوتر)
-
----
-
-## 🧠 هيكل قاعدة البيانات
+## 📦 بنية البيانات الحالية
 
 ```text
+products/{productId}
+media/{mediaId}
+settings/{docId}
 bookings/{bookingId}
-  - clientName
-  - phone
-  - dates
-  - period
-  - price
-  - deposit
-  - notes
-  - slotKeys
-  - pricingSummary
-  - currency
-  - createdAt
-  - updatedAt
-
 bookingSlots/{date-period}
-  - bookingId
-  - date
-  - period
-  - updatedAt
-
-settings/pricing
-  - standardPrices
-  - featuredPrices
-  - featuredWeekdays
-  - featuredDates
-  - currency
 ```
 
-### 🔒 ملاحظة أمنية
+## 🧩 Codex Plugin
 
-لا تعتمد على إخفاء لوحة الإدارة في الواجهة كوسيلة حماية. صلاحيات Firestore هي طبقة الحماية الأساسية، بينما فحص البريد في الواجهة يحسن تجربة المستخدم ويمنع الدخول غير المصرح به إلى شاشة الإدارة.
+يحتوي المشروع أيضاً على Plugin خاص بـ Codex ضمن:
+
+```text
+.agents/plugins/marketplace.json
+.agents/plugins/plugins/pool-booking/
+```
+
+وهو مخصص لمراجعة وتطوير المشروع، خصوصاً الأمن، Firebase، الأداء، الواجهات، والاختبارات.
+
+## 📋 ملاحظات التطوير
+
+- حافظ على RTL العربية.
+- لا تضع كلمات مرور أو tokens في Git.
+- لا تضعف Firestore Rules لحل مشكلة في الواجهة.
+- افحص تأثير أي تعديل على Firebase reads/listeners قبل دمجه.
+- شغّل `npm run build` بعد التعديلات البرمجية المهمة.
