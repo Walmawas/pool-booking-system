@@ -1,0 +1,7 @@
+{
+  "name": "pool-booking",
+  "version": "1.0.0",
+  "description": "Project-specific Codex skills for developing, auditing, securing, and optimizing the Pool Booking System.",
+  "repository": "https://github.com/Walmawas/pool-booking-system",
+  "skills": "./skills/"
+}
