@@ -29,12 +29,15 @@ assert(main.includes('collection(db, "bookingSlots")'), "main.js must reference 
 assert(main.includes('collection(db, "bookings")'), "main.js must reference bookings");
 assert(main.includes("runTransaction"), "booking writes must use a Firestore transaction");
 assert(main.includes("browserLocalPersistence"), "Firebase Auth should use local persistence");
-assert(config.includes('ADMIN_EMAIL'), "firebase-config.js must define ADMIN_EMAIL");
-assert(rules.includes('request.auth != null'), "Firestore rules must require authentication for protected operations");
-assert(rules.includes('match /bookings/{bookingId}'), "Firestore rules must protect booking documents");
-assert(rules.includes('match /bookingSlots/{slotId}'), "Firestore rules must define booking slot access");
+assert(config.includes("ADMIN_EMAIL"), "firebase-config.js must define ADMIN_EMAIL");
+assert(rules.includes("request.auth != null"), "Firestore rules must require authentication for protected operations");
+assert(rules.includes("match /bookings/{bookingId}"), "Firestore rules must protect booking documents");
+assert(rules.includes("match /bookingSlots/{slotId}"), "Firestore rules must define booking slot access");
 assert(firebase.includes('"public": "."'), "Firebase Hosting must serve the root static application");
 assert(firebase.includes('"src/**"'), "Firebase Hosting should continue ignoring the stale React source tree");
+assert(firebase.includes('"source": "main.js"'), "main.js should have an explicit cache policy");
+assert(firebase.includes('"source": "style.css"'), "style.css should have an explicit cache policy");
+assert(firebase.includes('"source": "assets/**"'), "assets should have an explicit cache policy");
 
 const forbiddenSecrets = [
   /AIza[0-9A-Za-z_-]{20,}/,
