@@ -1,0 +1,21 @@
+{
+  "name": "walmawas-pool-booking",
+  "interface": {
+    "displayName": "Pool Booking System"
+  },
+  "plugins": [
+    {
+      "name": "pool-booking",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pool-booking"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE",
+        "products": ["CODEX"]
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
