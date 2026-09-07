@@ -109,7 +109,8 @@ const state = {
   currentUser: null,
   unsubscribeBookings: null,
   unsubscribeSettings: null,
-  unsubscribePublicSlots: null
+  unsubscribePublicSlots: null,
+  publicSlotsRangeKey: ""
 };
 
 const periodLabels = {
@@ -176,6 +177,12 @@ onAuthStateChanged(auth, async (user) => {
 
 function bindEvents() {
   window.addEventListener("hashchange", renderRoute);
+  window.addEventListener("error", (event) => {
+    console.error("Unhandled runtime error:", event.error || event.message);
+  });
+  window.addEventListener("unhandledrejection", (event) => {
+    console.error("Unhandled promise rejection:", event.reason);
+  });
 
   els.loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -435,19 +442,44 @@ function subscribeSettings() {
   );
 }
 
+function getPublicDateRange() {
+  const { days } = getPublicCalendarDays();
+  if (!days.length) return null;
+  return {
+    startKey: toDateKey(days[0]),
+    endKey: toDateKey(days[days.length - 1])
+  };
+}
+
 function subscribePublicSlots() {
+  const range = getPublicDateRange();
+  if (!range) return;
+
+  const rangeKey = `${range.startKey}:${range.endKey}`;
+  if (state.unsubscribePublicSlots && state.publicSlotsRangeKey === rangeKey) return;
+
   state.unsubscribePublicSlots?.();
-  state.unsubscribePublicSlots = onSnapshot(
+  state.publicSlotsRangeKey = rangeKey;
+  state.publicSlots = new Map();
+
+  const slotsQuery = query(
     collection(db, "bookingSlots"),
+    where("date", ">=", range.startKey),
+    where("date", "<=", range.endKey)
+  );
+
+  state.unsubscribePublicSlots = onSnapshot(
+    slotsQuery,
     (snapshot) => {
       state.publicSlots = new Map(
         snapshot.docs.map((slotDoc) => [slotDoc.id, { id: slotDoc.id, ...slotDoc.data() }])
       );
       renderPublicCalendar();
     },
-    () => {
+    (error) => {
       state.publicSlots = new Map();
       renderPublicCalendar();
+      toast(error.message || "تعذر تحميل حالة الحجوزات.", "error");
     }
   );
 }
@@ -640,6 +672,7 @@ function movePublicRange(direction) {
 function renderPublicCalendar() {
   if (!els.publicCalendarGrid) return;
   const { title, days } = getPublicCalendarDays();
+  subscribePublicSlots();
   els.publicCalendarTitle.textContent = title;
 
   els.publicCalendarGrid.innerHTML = days
@@ -1161,19 +1194,31 @@ function getSlotKeys(dates, period) {
 
 function summarizeSelectedSlots(slotKeys) {
   const sorted = [...slotKeys].sort(compareSlotKeys);
+  const byDate = new Map();
+
+  sorted.forEach((slotKey) => {
+    const [dateKey, period] = splitSlotKey(slotKey);
+    if (!byDate.has(dateKey)) byDate.set(dateKey, new Set());
+    byDate.get(dateKey).add(period);
+  });
+
   let price = 0;
   let fullBlocks = 0;
   let remainderCount = 0;
 
-  for (let index = 0; index < sorted.length; index += 2) {
-    const pair = sorted.slice(index, index + 2);
-    if (pair.length === 2) {
-      const dateKey = splitSlotKey(pair[0])[0];
-      price += getDayPrices(dateKey).full;
+  for (const [dateKey, periods] of byDate) {
+    const prices = getDayPrices(dateKey);
+    const hasMorning = periods.has("morning");
+    const hasEvening = periods.has("evening");
+
+    if (hasMorning && hasEvening) {
+      price += prices.full;
       fullBlocks += 1;
-    } else {
-      const [dateKey, period] = splitSlotKey(pair[0]);
-      price += getDayPrices(dateKey)[period];
+    } else if (hasMorning) {
+      price += prices.morning;
+      remainderCount += 1;
+    } else if (hasEvening) {
+      price += prices.evening;
       remainderCount += 1;
     }
   }

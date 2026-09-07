@@ -1,0 +1,193 @@
+name: Apply Phase 2 runtime fixes
+
+on:
+  push:
+    branches:
+      - phase2/runtime-validation
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: phase2/runtime-validation
+          fetch-depth: 0
+
+      - name: Patch runtime logic
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('main.js')
+          text = path.read_text(encoding='utf-8')
+
+          if 'publicRangeKey: null' not in text:
+              state_pattern = re.compile(r'(unsubscribePublicSlots:\s*null\n)(\s*};)', re.S)
+              text, count = state_pattern.subn(r'\1  publicRangeKey: null\n\2', text, count=1)
+              if count != 1:
+                  raise SystemExit('state marker not found')
+
+          if 'where("date", ">=", startKey)' not in text:
+              public_pattern = re.compile(r'function subscribePublicSlots\(\) \{.*?\n\}', re.S)
+              new_public = '''function subscribePublicSlots() {
+  const { days } = getPublicCalendarDays();
+  if (!days.length) return;
+
+  const startKey = toDateKey(days[0]);
+  const endKey = toDateKey(days[days.length - 1]);
+  const rangeKey = `${startKey}|${endKey}`;
+
+  if (state.publicRangeKey === rangeKey && state.unsubscribePublicSlots) return;
+
+  state.unsubscribePublicSlots?.();
+  state.publicRangeKey = rangeKey;
+
+  const slotsQuery = query(
+    collection(db, "bookingSlots"),
+    where("date", ">=", startKey),
+    where("date", "<=", endKey)
+  );
+
+  state.unsubscribePublicSlots = onSnapshot(
+    slotsQuery,
+    (snapshot) => {
+      state.publicSlots = new Map(
+        snapshot.docs.map((slotDoc) => [slotDoc.id, { id: slotDoc.id, ...slotDoc.data() }])
+      );
+      renderPublicCalendar();
+    },
+    () => {
+      state.publicSlots = new Map();
+      renderPublicCalendar();
+    }
+  );
+}'''
+              text, count = public_pattern.subn(lambda _: new_public, text, count=1)
+              if count != 1:
+                  raise SystemExit('subscribePublicSlots marker not found')
+
+          if 'const byDate = new Map()' not in text:
+              summary_pattern = re.compile(r'function summarizeSelectedSlots\(slotKeys\) \{.*?\n\}', re.S)
+              new_summary = '''function summarizeSelectedSlots(slotKeys) {
+  const sorted = [...slotKeys].sort(compareSlotKeys);
+  const byDate = new Map();
+
+  sorted.forEach((slotKey) => {
+    const [dateKey, period] = splitSlotKey(slotKey);
+    if (!byDate.has(dateKey)) byDate.set(dateKey, new Set());
+    byDate.get(dateKey).add(period);
+  });
+
+  let price = 0;
+  let fullBlocks = 0;
+  let remainderCount = 0;
+
+  for (const [dateKey, periods] of byDate) {
+    const prices = getDayPrices(dateKey);
+    const hasMorning = periods.has("morning");
+    const hasEvening = periods.has("evening");
+
+    if (hasMorning && hasEvening) {
+      price += prices.full;
+      fullBlocks += 1;
+    } else if (hasMorning) {
+      price += prices.morning;
+      remainderCount += 1;
+    } else if (hasEvening) {
+      price += prices.evening;
+      remainderCount += 1;
+    }
+  }
+
+  return {
+    slotCount: sorted.length,
+    fullBlocks,
+    remainderCount,
+    price: Number(price.toFixed(2)),
+    slotKeys: sorted
+  };
+}'''
+              text, count = summary_pattern.subn(lambda _: new_summary, text, count=1)
+              if count != 1:
+                  raise SystemExit('summarizeSelectedSlots marker not found')
+
+          if 'subscribePublicSlots();\n  const { title, days } = getPublicCalendarDays();' not in text:
+              render_pattern = re.compile(
+                  r'function renderPublicCalendar\(\) \{\n(\s*)if \(!els\.publicCalendarGrid\) return;\n(\s*)const \{ title, days \} = getPublicCalendarDays\(\);'
+              )
+              def render_replacement(match):
+                  indent = match.group(1)
+                  return (
+                      'function renderPublicCalendar() {\n'
+                      f'{indent}if (!els.publicCalendarGrid) return;\n'
+                      f'{indent}subscribePublicSlots();\n'
+                      f'{match.group(2)}const {{ title, days }} = getPublicCalendarDays();'
+                  )
+              text, count = render_pattern.subn(render_replacement, text, count=1)
+              if count != 1:
+                  raise SystemExit('renderPublicCalendar marker not found')
+
+          if 'window.addEventListener("unhandledrejection"' not in text:
+              marker = '''initializePublicControls();
+bindEvents();
+subscribeSettings();
+subscribePublicSlots();'''
+              replacement = '''initializePublicControls();
+bindEvents();
+subscribeSettings();
+subscribePublicSlots();
+
+window.addEventListener("error", (event) => {
+  console.error("Unhandled application error:", event.error || event.message);
+});
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("Unhandled promise rejection:", event.reason);
+});'''
+              if marker not in text:
+                  raise SystemExit('initialization marker not found')
+              text = text.replace(marker, replacement, 1)
+
+          path.write_text(text, encoding='utf-8')
+
+      - name: Validate JavaScript syntax and runtime fixes
+        run: |
+          node --check main.js
+          node scripts/validate-static-app.mjs
+          node - <<'NODE'
+          const fs = require('fs');
+          const source = fs.readFileSync('main.js', 'utf8');
+          const required = [
+            'where("date", ">=", startKey)',
+            'where("date", "<=", endKey)',
+            'const byDate = new Map()',
+            'if (hasMorning && hasEvening)',
+            'subscribePublicSlots();',
+            'window.addEventListener("unhandledrejection"'
+          ];
+          for (const marker of required) {
+            if (!source.includes(marker)) throw new Error(`Missing runtime fix: ${marker}`);
+          }
+          console.log('Phase 2 runtime assertions passed.');
+          NODE
+
+      - name: Commit runtime fixes
+        run: |
+          if git diff --quiet -- main.js; then
+            echo "Runtime fixes are already present."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add main.js
+          git diff --cached --check
+          git commit -m "fix: optimize public slots and cross-date pricing [apply-runtime-fixes]"
+          git push origin phase2/runtime-validation
