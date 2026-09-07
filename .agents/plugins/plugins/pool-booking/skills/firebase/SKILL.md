@@ -1,6 +1,6 @@
 ---
 name: firebase
- description: Work safely with Firebase Authentication and Firestore in the Pool Booking System.
+description: Work safely with Firebase Authentication and Firestore in the Pool Booking System.
 ---
 
 # Firebase
